@@ -1,0 +1,41 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-[#f3f1f8] text-[#1f2937] antialiased;
+  }
+
+  input,
+  select,
+  textarea {
+    @apply rounded-xl border border-[#ddd4ea] bg-white px-3 py-2.5 text-sm text-[#1f2937] placeholder:text-[#9ca3af] shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition duration-200 focus:border-[#765492] focus:outline-none focus:ring-4 focus:ring-[#76549233];
+  }
+}
+
+@layer components {
+  .card {
+    @apply rounded-2xl border border-[#e6deef] bg-white p-5 shadow-[0_8px_28px_rgba(118,84,146,0.08)];
+  }
+
+  .btn-primary {
+    @apply rounded-xl bg-[#765492] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition duration-200 hover:bg-[#694983] focus:outline-none focus:ring-4 focus:ring-[#76549240] disabled:cursor-not-allowed disabled:opacity-70;
+  }
+
+  .btn-secondary {
+    @apply rounded-xl border border-[#d8d1e5] bg-white px-4 py-2.5 text-sm font-semibold text-[#433257] transition duration-200 hover:border-[#c8bddb] hover:bg-[#f8f5fc] focus:outline-none focus:ring-4 focus:ring-[#76549226];
+  }
+
+  .btn-danger {
+    @apply rounded-xl bg-[#e12d2d] px-4 py-2.5 text-sm font-semibold text-white transition duration-200 hover:bg-[#ca2525] focus:outline-none focus:ring-4 focus:ring-[#e12d2d33] disabled:cursor-not-allowed disabled:opacity-70;
+  }
+
+  .panel-title {
+    @apply text-2xl font-bold text-[#261d35];
+  }
+
+  .section-subtitle {
+    @apply mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#765492]/80;
+  }
+}
