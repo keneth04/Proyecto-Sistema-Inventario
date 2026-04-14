@@ -32,12 +32,11 @@ app.use(ObservabilityMiddleware);
 
 HealthAPI(app);
 ObservabilityAPI(app);
-HorariosAPI(app);
-UsersAPI(app);
-AuthAPI(app);
-SkillsAPI(app);
 
-// 🔥 Middleware global de errores (SIEMPRE AL FINAL)
+AuthAPI(app);
+
+
+
 app.use(ErrorMiddleware);
 
 const startServer = async () => {

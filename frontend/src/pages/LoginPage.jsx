@@ -42,7 +42,7 @@ export default function LoginPage() {
     try {
       const { data } = await AuthApi.login({ email, password });
       login(data.body.user, data.body.csrfToken);
-      navigate(data.body.user.role === 'admin' ? '/admin' : '/agent', { replace: true });
+      navigate('/', { replace: true });
     } catch (error) {
       const message = getErrorMessage(error);
       const lockMatch = message.match(/Cuenta bloqueada, intenta nuevamente en (\d+) minutos/i);
@@ -98,7 +98,7 @@ export default function LoginPage() {
             <BrandLogo className="mb-8 h-16" />
             <h2 className="mb-3 text-4xl font-bold leading-tight">Bienvenido de vuelta</h2>
             <p className="max-w-md text-base leading-relaxed text-white/90">
-              Hoy también es un gran día para coordinar turnos con precisión y mantener a tu equipo conectado.
+              Accede al sistema interno con una experiencia clara, segura y profesional.
             </p>
             <div className="mt-8 h-1.5 w-28 rounded-full bg-[#e12d2d]" />
           </div>

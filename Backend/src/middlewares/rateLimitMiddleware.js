@@ -10,13 +10,7 @@ const toEmail = (req) => {
   return typeof email === 'string' ? email.trim().toLowerCase() : 'unknown';
 };
 
-const createRateLimiter = ({
-  name,
-  windowMs,
-  max,
-  message,
-  keyGenerator
-}) => {
+const createRateLimiter = ({ name, windowMs, max, message, keyGenerator }) => {
   const store = new Map();
   stores.set(name, store);
 
@@ -63,8 +57,6 @@ setInterval(() => {
 
 const authWindowMs = Config.rateLimit.auth.windowMs;
 const authMax = Config.rateLimit.auth.max;
-const reportWindowMs = Config.rateLimit.reports.windowMs;
-const reportMax = Config.rateLimit.reports.max;
 
 module.exports.AuthRateLimiters = {
   login: createRateLimiter({
@@ -80,15 +72,5 @@ module.exports.AuthRateLimiters = {
     max: authMax,
     message: 'Demasiadas solicitudes de recuperación. Intenta nuevamente en unos minutos.',
     keyGenerator: (req) => `${normalizeIp(req.ip)}:${toEmail(req)}`
-  })
-};
-
-module.exports.HorariosRateLimiters = {
-  intensiveReports: createRateLimiter({
-    name: 'horarios-intensive-reports',
-    windowMs: reportWindowMs,
-    max: reportMax,
-    message: 'Se alcanzó el límite temporal de consultas de reportes. Intenta nuevamente en breve.',
-    keyGenerator: (req) => req?.user?.id?.toString() || normalizeIp(req.ip)
   })
 };

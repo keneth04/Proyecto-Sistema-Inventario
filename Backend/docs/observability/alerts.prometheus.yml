@@ -1,7 +1,7 @@
 groups:
-  - name: horarios-api-basic-alerts
+  - name: api-basic-alerts
     rules:
-      - alert: HorariosApiHighErrorRate
+      - alert: ApiHighErrorRate
         expr: |
           sum(rate(http_request_errors_total[5m]))
           /
@@ -10,12 +10,12 @@ groups:
         for: 10m
         labels:
           severity: warning
-          service: horarios-api
+          service: internal-api
         annotations:
           summary: "Tasa de error > 5% por 10 minutos"
           description: "La API está devolviendo demasiados 4xx/5xx sostenidos. Revisar logs por requestId."
 
-      - alert: HorariosApiHighP95Latency
+      - alert: ApiHighP95Latency
         expr: |
           histogram_quantile(
             0.95,
@@ -24,17 +24,17 @@ groups:
         for: 10m
         labels:
           severity: warning
-          service: horarios-api
+          service: internal-api
         annotations:
           summary: "Latencia p95 > 1.5s por 10 minutos"
-          description: "Existe degradación de performance. Revisar queries Mongo y saturación de CPU."
+          description: "Existe degradación de performance. Revisar uso de base de datos y recursos."
 
-      - alert: HorariosApiDown
-        expr: up{job="horarios-api"} == 0
+      - alert: ApiDown
+        expr: up{job="internal-api"} == 0
         for: 2m
         labels:
           severity: critical
-          service: horarios-api
+          service: internal-api
         annotations:
-          summary: "Instancia de horarios-api caída"
+          summary: "Instancia de internal-api caída"
           description: "Prometheus no puede scrapear la API. Verificar /health/live, proceso y red."

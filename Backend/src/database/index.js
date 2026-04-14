@@ -13,47 +13,6 @@ const CRITICAL_INDEXES = [
     options: { name: 'uidx_users_email', unique: true }
   },
   {
-    collection: 'horarios',
-    key: { userId: 1, date: 1, status: 1 },
-    options: { name: 'idx_horarios_user_date_status' }
-  },
-  {
-    collection: 'horarios',
-    key: { date: 1, status: 1 },
-    options: { name: 'idx_horarios_date_status' }
-  },
-{
-    collection: 'horarios',
-    key: { status: 1, date: -1, _id: -1 },
-    options: { name: 'idx_horarios_status_date_desc' }
-  },
-  {
-    collection: 'horarios',
-    key: { userId: 1, status: 1, date: -1, _id: -1 },
-    options: { name: 'idx_horarios_user_status_date_desc' }
-  },
-  {
-    collection: 'skills',
-    key: { type: 1, status: 1 },
-    options: { name: 'idx_skills_type_status' }
-  },
-  {
-    collection: 'skills',
-    key: { status: 1, createdAt: -1 },
-    options: { name: 'idx_skills_status_created_desc' }
-  },
-  {
-    collection: 'turnos_tipo',
-    key: { code: 1, status: 1 },
-    options: { name: 'idx_turnos_tipo_code_status' }
-  },
-
-  {
-    collection: 'turnos_tipo',
-    key: { status: 1, code: 1, createdAt: -1 },
-    options: { name: 'idx_turnos_tipo_status_code_created_desc' }
-  },
-  {
     collection: 'users',
     key: { status: 1, createdAt: -1 },
     options: { name: 'idx_users_status_created_desc' }
