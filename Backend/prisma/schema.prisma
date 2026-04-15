@@ -1,0 +1,339 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+/// Catálogo de roles internos para autorización RBAC.
+model Role {
+  id          Int      @id @default(autoincrement())
+  code        RoleCode @unique
+  name        String   @db.VarChar(80)
+  description String?  @db.VarChar(255)
+  isActive    Boolean  @default(true)
+  users       User[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive])
+  @@map("roles")
+}
+
+/// Usuario interno que opera el sistema (entrega, recibe, administra).
+model User {
+  id             Int      @id @default(autoincrement())
+  roleId         Int
+  firstName      String   @db.VarChar(80)
+  lastName       String   @db.VarChar(80)
+  email          String   @unique @db.VarChar(120)
+  passwordHash   String   @db.VarChar(255)
+  status         UserStatus @default(ACTIVE)
+  lastLoginAt    DateTime?
+
+  role           Role     @relation(fields: [roleId], references: [id], onUpdate: Cascade, onDelete: Restrict)
+  deliveredLoans Loan[]   @relation("LoanDeliveredByUser")
+  receivedReturns Return[] @relation("ReturnReceivedByUser")
+  inventoryMovements InventoryMovement[]
+  auditLogs      AuditLog[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([roleId])
+  @@index([status])
+  @@map("users")
+}
+
+/// Colaborador al que se le presta equipo (no necesariamente usuario del sistema).
+model Employee {
+  id           Int      @id @default(autoincrement())
+  employeeCode String   @unique @db.VarChar(40)
+  firstName    String   @db.VarChar(80)
+  lastName     String   @db.VarChar(80)
+  email        String?  @unique @db.VarChar(120)
+  phone        String?  @db.VarChar(30)
+  department   String?  @db.VarChar(100)
+  position     String?  @db.VarChar(100)
+  status       EmployeeStatus @default(ACTIVE)
+
+  loans        Loan[]
+  returns      Return[]
+  inventoryMovements InventoryMovement[]
+  auditLogs    AuditLog[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([department])
+  @@map("employees")
+}
+
+/// Agrupa activos por familia (diademas, mouse, teclados, etc.).
+model Category {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique @db.VarChar(100)
+  description String?  @db.VarChar(255)
+  isActive    Boolean  @default(true)
+  assets      Asset[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive])
+  @@map("categories")
+}
+
+/// Activo inventariable/prestable con control de stock consolidado.
+model Asset {
+  id                Int         @id @default(autoincrement())
+  categoryId        Int
+  assetCode         String      @unique @db.VarChar(50)
+  name              String      @db.VarChar(120)
+  brand             String?     @db.VarChar(80)
+  model             String?     @db.VarChar(80)
+  serialNumber      String?     @unique(map: "uq_assets_serial") @db.VarChar(120)
+  description       String?     @db.Text
+  totalQuantity     Int         @default(0)
+  availableQuantity Int         @default(0)
+  minimumStock      Int?        @default(0)
+  status            AssetStatus @default(ACTIVE)
+
+  category          Category    @relation(fields: [categoryId], references: [id], onUpdate: Cascade, onDelete: Restrict)
+  loanItems         LoanItem[]
+  returnItems       ReturnItem[]
+  inventoryMovements InventoryMovement[]
+  auditLogs         AuditLog[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([categoryId])
+  @@index([status])
+  @@index([name])
+  @@map("assets")
+}
+
+/// Cabecera de préstamo: quién recibe, quién entrega y cuándo.
+model Loan {
+  id                 Int       @id @default(autoincrement())
+  employeeId         Int
+  deliveredByUserId  Int
+  loanDate           DateTime  @default(now())
+  expectedReturnDate DateTime?
+  status             LoanStatus @default(OPEN)
+  observations       String?   @db.Text
+
+  employee           Employee  @relation(fields: [employeeId], references: [id], onUpdate: Cascade, onDelete: Restrict)
+  deliveredByUser    User      @relation("LoanDeliveredByUser", fields: [deliveredByUserId], references: [id], onUpdate: Cascade, onDelete: Restrict)
+  items              LoanItem[]
+  returns            Return[]
+  inventoryMovements InventoryMovement[]
+  auditLogs          AuditLog[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([employeeId])
+  @@index([deliveredByUserId])
+  @@index([loanDate])
+  @@index([status])
+  @@map("loans")
+}
+
+/// Detalle por activo prestado y su retorno acumulado.
+model LoanItem {
+  id               Int      @id @default(autoincrement())
+  loanId           Int
+  assetId          Int
+  quantity         Int
+  returnedQuantity Int      @default(0)
+  notes            String?  @db.VarChar(255)
+
+  loan             Loan     @relation(fields: [loanId], references: [id], onUpdate: Cascade, onDelete: Restrict)
+  asset            Asset    @relation(fields: [assetId], references: [id], onUpdate: Cascade, onDelete: Restrict)
+  returnItems      ReturnItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([loanId, assetId])
+  @@index([assetId])
+  @@map("loan_items")
+}
+
+/// Cabecera de devolución: quién devuelve, quién recibe y cuándo.
+model Return {
+  id               Int       @id @default(autoincrement())
+  loanId           Int
+  employeeId       Int
+  receivedByUserId Int
+  returnDate       DateTime  @default(now())
+  observations     String?   @db.Text
+
+  loan             Loan      @relation(fields: [loanId], references: [id], onUpdate: Cascade, onDelete: Restrict)
+  employee         Employee  @relation(fields: [employeeId], references: [id], onUpdate: Cascade, onDelete: Restrict)
+  receivedByUser   User      @relation("ReturnReceivedByUser", fields: [receivedByUserId], references: [id], onUpdate: Cascade, onDelete: Restrict)
+  items            ReturnItem[]
+  inventoryMovements InventoryMovement[]
+  auditLogs        AuditLog[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([loanId])
+  @@index([employeeId])
+  @@index([receivedByUserId])
+  @@index([returnDate])
+  @@map("returns")
+}
+
+/// Detalle devuelto por activo con estado físico del elemento.
+model ReturnItem {
+  id              Int               @id @default(autoincrement())
+  returnId        Int
+  loanItemId      Int
+  assetId         Int
+  quantity        Int
+  itemCondition   ReturnItemCondition
+  observations    String?           @db.VarChar(255)
+
+  return          Return            @relation(fields: [returnId], references: [id], onUpdate: Cascade, onDelete: Restrict)
+  loanItem        LoanItem          @relation(fields: [loanItemId], references: [id], onUpdate: Cascade, onDelete: Restrict)
+  asset           Asset             @relation(fields: [assetId], references: [id], onUpdate: Cascade, onDelete: Restrict)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([loanItemId])
+  @@index([assetId])
+  @@map("return_items")
+}
+
+/// Kardex simplificado: toda entrada/salida/ajuste de stock.
+model InventoryMovement {
+  id             Int                  @id @default(autoincrement())
+  assetId         Int
+  performedByUserId Int
+  employeeId      Int?
+  loanId          Int?
+  returnId        Int?
+  movementType    InventoryMovementType
+  quantityDelta   Int
+  resultingStock  Int
+  reason          String?             @db.VarChar(255)
+
+  asset          Asset     @relation(fields: [assetId], references: [id], onUpdate: Cascade, onDelete: Restrict)
+  performedByUser User     @relation(fields: [performedByUserId], references: [id], onUpdate: Cascade, onDelete: Restrict)
+  employee       Employee? @relation(fields: [employeeId], references: [id], onUpdate: Cascade, onDelete: SetNull)
+  loan           Loan?     @relation(fields: [loanId], references: [id], onUpdate: Cascade, onDelete: SetNull)
+  return         Return?   @relation(fields: [returnId], references: [id], onUpdate: Cascade, onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+
+  @@index([assetId, createdAt])
+  @@index([employeeId, createdAt])
+  @@index([performedByUserId, createdAt])
+  @@index([movementType, createdAt])
+  @@map("inventory_movements")
+}
+
+/// Auditoría transversal de acciones críticas del dominio.
+model AuditLog {
+  id             Int            @id @default(autoincrement())
+  performedByUserId Int
+  employeeId      Int?
+  entityType      AuditEntityType
+  entityId        Int
+  action          AuditActionType
+  summary         String         @db.VarChar(255)
+  metadata        Json?
+
+  performedByUser User           @relation(fields: [performedByUserId], references: [id], onUpdate: Cascade, onDelete: Restrict)
+  employee        Employee?      @relation(fields: [employeeId], references: [id], onUpdate: Cascade, onDelete: SetNull)
+  asset           Asset?         @relation(fields: [assetId], references: [id], onUpdate: Cascade, onDelete: SetNull)
+  loan            Loan?          @relation(fields: [loanId], references: [id], onUpdate: Cascade, onDelete: SetNull)
+  return          Return?        @relation(fields: [returnId], references: [id], onUpdate: Cascade, onDelete: SetNull)
+
+  assetId         Int?
+  loanId          Int?
+  returnId        Int?
+
+  createdAt DateTime @default(now())
+
+  @@index([entityType, entityId, createdAt])
+  @@index([performedByUserId, createdAt])
+  @@index([employeeId, createdAt])
+  @@map("audit_logs")
+}
+
+enum RoleCode {
+  ADMIN
+  INVENTORY_MANAGER
+  VIEWER
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum EmployeeStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum AssetStatus {
+  ACTIVE
+  INACTIVE
+  MAINTENANCE
+  RETIRED
+}
+
+enum LoanStatus {
+  OPEN
+  PARTIALLY_RETURNED
+  CLOSED
+  CANCELLED
+}
+
+enum ReturnItemCondition {
+  GOOD
+  FAIR
+  DAMAGED
+  NON_FUNCTIONAL
+}
+
+enum InventoryMovementType {
+  INITIAL_LOAD
+  LOAN_OUT
+  RETURN_IN
+  MANUAL_ADJUSTMENT
+  WRITE_OFF
+}
+
+enum AuditEntityType {
+  USER
+  EMPLOYEE
+  CATEGORY
+  ASSET
+  LOAN
+  RETURN
+  INVENTORY_MOVEMENT
+}
+
+enum AuditActionType {
+  CREATE
+  UPDATE
+  DELETE
+  LOGIN
+  LOGOUT
+  LOAN_REGISTERED
+  RETURN_REGISTERED
+  STOCK_ADJUSTED
+  STATUS_CHANGED
+}
