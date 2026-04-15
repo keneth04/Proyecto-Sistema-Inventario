@@ -1,18 +1,15 @@
 const express = require('express');
 
 const { Config, validateCriticalConfig } = require('./src/config');
-const { HorariosAPI } = require('./src/Horarios');
-const { UsersAPI } = require('./src/users');
-const { AuthAPI } = require('./src/auth');
 const { ErrorMiddleware } = require('./src/middlewares/errorMiddleware');
-const { SkillsAPI } = require('./src/skills');
 const { SecurityMiddlewares } = require('./src/middlewares/securityMiddleware');
-const { ensureMongoIndexes } = require('./src/database');
 const { RequestContextMiddleware } = require('./src/middlewares/requestContextMiddleware');
 const { Logger } = require('./src/common/logger');
 const { ObservabilityMiddleware } = require('./src/middlewares/observabilityMiddleware');
 const { ObservabilityAPI } = require('./src/observability');
 const { HealthAPI } = require('./src/health');
+const { connectDatabase } = require('./src/database');
+const { apiRoutes } = require('./src/routes');
 
 const app = express();
 
@@ -33,14 +30,12 @@ app.use(ObservabilityMiddleware);
 HealthAPI(app);
 ObservabilityAPI(app);
 
-AuthAPI(app);
-
-
+app.use('/api', apiRoutes);
 
 app.use(ErrorMiddleware);
 
 const startServer = async () => {
-  await ensureMongoIndexes();
+  await connectDatabase();
 
   app.listen(Config.port, () => {
     Logger.info('server_started', {
