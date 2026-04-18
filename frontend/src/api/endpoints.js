@@ -1,18 +1,48 @@
 import api from './client';
 
-/**
- * Fase 2 (limpieza): se conserva únicamente auth,
- * removiendo contratos del dominio legado.
- */
 
 export const AuthApi = {
   login: (payload) => api.post('/auth/login', payload),
-  session: () => api.get('/auth/session'),
-  logout: (csrfToken) =>
-    api.post('/auth/logout', null, {
-      headers: csrfToken ? { 'X-CSRF-Token': csrfToken } : undefined
-    }),
-  forgotPassword: (payload) => api.post('/auth/forgot-password', payload),
-  resetPassword: (payload) => api.post('/auth/reset-password', payload)
+  me: () => api.get('/auth/me')
 };
 
+const buildCrudApi = (resource) => ({
+  list: (params) => api.get(`/${resource}`, { params }),
+  findById: (id) => api.get(`/${resource}/${id}`),
+  create: (payload) => api.post(`/${resource}`, payload),
+  update: (id, payload) => api.put(`/${resource}/${id}`, payload),
+  remove: (id) => api.delete(`/${resource}/${id}`)
+});
+
+export const UserApi = buildCrudApi('users');
+export const EmployeeApi = buildCrudApi('employees');
+export const CategoryApi = buildCrudApi('categories');
+
+export const AssetApi = {
+  ...buildCrudApi('assets'),
+  changeStatus: (id, status) => api.patch(`/assets/${id}/status`, { status })
+};
+
+export const LoanApi = {
+  list: (params) => api.get('/loans', { params }),
+  findById: (id) => api.get(`/loans/${id}`),
+  create: (payload) => api.post('/loans', payload)
+};
+
+export const ReturnApi = {
+  list: (params) => api.get('/returns', { params }),
+  findById: (id) => api.get(`/returns/${id}`),
+  create: (payload) => api.post('/returns', payload)
+};
+
+export const InventoryApi = {
+  summary: () => api.get('/inventory/summary'),
+  availableAssets: () => api.get('/inventory/available-assets'),
+  loanedAssets: () => api.get('/inventory/loaned-assets')
+};
+
+export const AuditApi = {
+  general: (params) => api.get('/audit/general', { params }),
+  byAsset: (assetId, params) => api.get(`/audit/asset/${assetId}`, { params }),
+  byEmployee: (employeeId, params) => api.get(`/audit/employee/${employeeId}`, { params })
+};
