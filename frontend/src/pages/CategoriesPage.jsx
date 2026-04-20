@@ -68,7 +68,11 @@ export default function CategoriesPage() {
 
   return (
     <div>
-      <PageHeader title="Categorías" actions={canManage ? <button className="btn-primary" onClick={handleCreate}>Nueva categoría</button> : null} />
+      <PageHeader
+        title="Categorías"
+        subtitle="Organiza el inventario en grupos claros para facilitar filtros, reportes y control operativo."
+        actions={canManage ? <button className="btn-primary" onClick={handleCreate}>Nueva categoría</button> : null}
+      />
       <Table
         columns={[
           { key: 'name', label: 'Nombre' },

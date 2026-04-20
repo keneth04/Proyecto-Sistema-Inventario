@@ -17,7 +17,11 @@ export default function ReturnsPage() {
 
   return (
     <div>
-      <PageHeader title="Devoluciones" actions={canManage ? <Link className="btn-primary" to="/returns/new">Registrar devolución</Link> : null} />
+      <PageHeader
+        title="Devoluciones"
+        subtitle="Registra recepciones, valida estado de entrega y cierra préstamos pendientes."
+        actions={canManage ? <Link className="btn-primary" to="/returns/new">Registrar devolución</Link> : null}
+      />
       <Table
         columns={[
           { key: 'id', label: '#' },

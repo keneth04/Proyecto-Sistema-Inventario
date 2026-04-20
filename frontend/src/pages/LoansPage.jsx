@@ -17,7 +17,11 @@ export default function LoansPage() {
 
   return (
     <div>
-      <PageHeader title="Préstamos" actions={canManage ? <Link className="btn-primary" to="/loans/new">Registrar préstamo</Link> : null} />
+    <PageHeader
+        title="Préstamos"
+        subtitle="Controla asignaciones activas, responsables de entrega y fechas clave del proceso."
+        actions={canManage ? <Link className="btn-primary" to="/loans/new">Registrar préstamo</Link> : null}
+      />
       <Table
         columns={[
           { key: 'id', label: '#' },

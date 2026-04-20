@@ -81,6 +81,7 @@ export default function EmployeesPage() {
     <div>
       <PageHeader
         title="Empleados"
+        subtitle="Administra colaboradores y mantén trazabilidad clara sobre préstamos activos y devoluciones."
         actions={canManage ? <button className="btn-primary" onClick={onOpenCreate}>Nuevo empleado</button> : null}
       />
       <Table
