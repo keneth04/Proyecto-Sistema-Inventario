@@ -6,7 +6,22 @@ const { movementRepository } = require('../repositories/movementRepository');
 const { auditRepository } = require('../repositories/auditRepository');
 const { employeeRepository } = require('../repositories/employeeRepository');
 
-const paginate = ({ page, pageSize }) => ({ skip: (page - 1) * pageSize, take: pageSize });
+const toPositiveInt = (value, fallback) => {
+  const parsed = Number.parseInt(value, 10);
+  if (Number.isNaN(parsed) || parsed < 1) return fallback;
+  return parsed;
+};
+
+const paginate = ({ page, pageSize }) => {
+  const safePage = toPositiveInt(page, 1);
+  const safePageSize = Math.min(toPositiveInt(pageSize, 20), 100);
+  return {
+    skip: (safePage - 1) * safePageSize,
+    take: safePageSize,
+    page: safePage,
+    pageSize: safePageSize
+  };
+};
 
 const computeLoanStatus = (loan) => {
   const allReturned = loan.items.every((item) => item.returnedQuantity >= item.quantity);
@@ -71,8 +86,9 @@ const loanService = {
     });
   },
   list: async ({ page, pageSize }) => {
-    const [items, total] = await Promise.all([loanRepository.list(paginate({ page, pageSize })), loanRepository.count()]);
-    return { items, pagination: { page, pageSize, total } };
+    const pagination = paginate({ page, pageSize });
+    const [items, total] = await Promise.all([loanRepository.list(pagination), loanRepository.count()]);
+    return { items, pagination: { page: pagination.page, pageSize: pagination.pageSize, total } };
   },
   findById: async (id) => {
     const loan = await loanRepository.findById(id);

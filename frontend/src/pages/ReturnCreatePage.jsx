@@ -1,82 +1,255 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { LoanApi, ReturnApi } from '../api/endpoints';
 import PageHeader from '../components/ui/PageHeader';
+import Table from '../components/Table';
 import { useToast } from '../components/Toast';
-import { getErrorMessage } from '../utils/format';
+import { formatDateTime, fullName, getErrorMessage } from '../utils/format';
+
+const DEFAULT_CONDITION = 'GOOD';
 
 export default function ReturnCreatePage() {
-  const [loans, setLoans] = useState([]);
-  const [loanDetail, setLoanDetail] = useState(null);
-  const [form, setForm] = useState({ loanId: '', employeeId: '', returnDate: '', observations: '', items: [] });
+  const [activeLoans, setActiveLoans] = useState([]);
+  const [selectedLoanId, setSelectedLoanId] = useState(null);
+  const [form, setForm] = useState({ itemCondition: DEFAULT_CONDITION, observations: '', returnDate: '' });
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [filters, setFilters] = useState({ query: '', employee: '', asset: '', loanDate: '' });
   const { push } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
-    LoanApi.list({ page: 1, pageSize: 100 }).then(({ data }) => {
-      setLoans(data.body.items.filter((loan) => loan.status !== 'CLOSED'));
+    const loadActiveLoans = async () => {
+      try {
+        const { data } = await LoanApi.list({ page: 1, pageSize: 100 });
+        setActiveLoans(data.body.items.filter((loan) => loan.status !== 'CLOSED'));
+      } catch (error) {
+        push(getErrorMessage(error), 'error');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadActiveLoans();
+  }, [push]);
+
+  const employeeOptions = useMemo(() => {
+    const map = new Map();
+    activeLoans.forEach((loan) => {
+      map.set(loan.employeeId, fullName(loan.employee));
     });
-  }, []);
+  return [...map.entries()].map(([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name));
+  }, [activeLoans]);
 
-  const onLoanChange = async (value) => {
-    setForm((prev) => ({ ...prev, loanId: value }));
-    if (!value) return;
-    const { data } = await LoanApi.findById(value);
-    const loan = data.body;
-    setLoanDetail(loan);
-    setForm((prev) => ({
-      ...prev,
-      loanId: value,
-      employeeId: loan.employeeId,
-      items: loan.items
-        .filter((item) => item.returnedQuantity < item.quantity)
-        .map((item) => ({
-          loanItemId: item.id,
-          assetId: item.assetId,
-          quantity: item.quantity - item.returnedQuantity,
-          itemCondition: 'GOOD',
-          observations: ''
-        }))
-    }));
-  };
+  const assetOptions = useMemo(() => {
+    const map = new Map();
+    activeLoans.forEach((loan) => {
+      loan.items.forEach((item) => {
+        if (item.returnedQuantity < item.quantity) {
+          map.set(item.assetId, item.asset?.name || `Activo #${item.assetId}`);
+        }
+      });
+    });
+    return [...map.entries()].map(([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name));
+  }, [activeLoans]);
 
-  const setItem = (index, patch) => setForm((prev) => ({ ...prev, items: prev.items.map((item, idx) => (idx === index ? { ...item, ...patch } : item)) }));
+  const filteredLoans = useMemo(() => {
+    const normalizedQuery = filters.query.trim().toLowerCase();
+
+    return activeLoans.filter((loan) => {
+      const employeeName = fullName(loan.employee).toLowerCase();
+      const assetNames = loan.items.map((item) => item.asset?.name || '').join(' ').toLowerCase();
+      const loanDate = loan.loanDate ? new Date(loan.loanDate).toISOString().slice(0, 10) : '';
+
+      const matchesQuery =
+        !normalizedQuery ||
+        String(loan.id).includes(normalizedQuery) ||
+        employeeName.includes(normalizedQuery) ||
+        assetNames.includes(normalizedQuery);
+
+      const matchesEmployee = !filters.employee || String(loan.employeeId) === filters.employee;
+      const matchesAsset = !filters.asset || loan.items.some((item) => String(item.assetId) === filters.asset && item.returnedQuantity < item.quantity);
+      const matchesDate = !filters.loanDate || loanDate === filters.loanDate;
+
+      return matchesQuery && matchesEmployee && matchesAsset && matchesDate;
+    });
+  }, [activeLoans, filters]);
+
+  const selectedLoan = useMemo(() => activeLoans.find((loan) => loan.id === selectedLoanId) || null, [activeLoans, selectedLoanId]);
+
+  const pendingItems = useMemo(
+    () =>
+      selectedLoan
+        ? selectedLoan.items
+            .filter((item) => item.returnedQuantity < item.quantity)
+            .map((item) => ({
+              loanItemId: item.id,
+              assetId: item.assetId,
+              assetName: item.asset?.name || `Activo #${item.assetId}`,
+              pendingQuantity: item.quantity - item.returnedQuantity
+            }))
+        : [],
+    [selectedLoan]
+  );
 
   const submit = async (event) => {
     event.preventDefault();
+
+    if (!selectedLoan) {
+      push('Selecciona un préstamo activo antes de registrar la devolución.', 'error');
+      return;
+    }
+
+    if (pendingItems.length === 0) {
+      push('El préstamo seleccionado ya no tiene ítems pendientes de devolución.', 'error');
+      return;
+    }
+
     try {
+      setSubmitting(true);
       await ReturnApi.create({
-        loanId: Number(form.loanId),
-        employeeId: Number(form.employeeId),
+        loanId: selectedLoan.id,
+        employeeId: selectedLoan.employeeId,
         returnDate: form.returnDate || undefined,
         observations: form.observations || undefined,
-        items: form.items.map((item) => ({ ...item, quantity: Number(item.quantity) }))
+        items: pendingItems.map((item) => ({
+          loanItemId: item.loanItemId,
+          assetId: item.assetId,
+          quantity: item.pendingQuantity,
+          itemCondition: form.itemCondition,
+          observations: form.observations || undefined
+        }))
       });
-      push('Devolución registrada', 'info');
+
+      push('Devolución registrada correctamente', 'info');
       navigate('/returns');
     } catch (error) {
       push(getErrorMessage(error), 'error');
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
-    <div>
-      <PageHeader title="Registrar devolución" actions={<Link className="btn-secondary" to="/returns">Volver</Link>} />
+    <div className="space-y-4">
+      <PageHeader
+        title="Registrar devolución"
+        subtitle="Busca préstamos activos, selecciona una fila y registra la devolución de forma rápida."
+        actions={<Link className="btn-secondary" to="/returns">Volver</Link>}
+      />
+
+      <section className="card space-y-3">
+        <p className="section-subtitle">Filtro rápido</p>
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          <input
+            placeholder="Buscar por préstamo, empleado o activo"
+            value={filters.query}
+            onChange={(e) => setFilters((prev) => ({ ...prev, query: e.target.value }))}
+          />
+          <select value={filters.employee} onChange={(e) => setFilters((prev) => ({ ...prev, employee: e.target.value }))}>
+            <option value="">Todos los empleados</option>
+            {employeeOptions.map((employee) => (
+              <option key={employee.id} value={employee.id}>
+                {employee.name}
+              </option>
+            ))}
+          </select>
+          <select value={filters.asset} onChange={(e) => setFilters((prev) => ({ ...prev, asset: e.target.value }))}>
+            <option value="">Todos los activos</option>
+            {assetOptions.map((asset) => (
+              <option key={asset.id} value={asset.id}>
+                {asset.name}
+              </option>
+            ))}
+          </select>
+          <input type="date" value={filters.loanDate} onChange={(e) => setFilters((prev) => ({ ...prev, loanDate: e.target.value }))} />
+        </div>
+      </section>
+
+      <section className="card space-y-3">
+        <p className="section-subtitle">Préstamos activos</p>
+        {loading ? (
+          <p className="text-sm text-[#6b6477]">Cargando préstamos...</p>
+        ) : (
+          <Table
+            columns={[
+              { key: 'id', label: '#' },
+              { key: 'employee', label: 'Empleado', render: (loan) => fullName(loan.employee) },
+              { key: 'loanDate', label: 'Fecha préstamo', render: (loan) => formatDateTime(loan.loanDate) },
+              {
+                key: 'assets',
+                label: 'Activos pendientes',
+                render: (loan) =>
+                  loan.items
+                    .filter((item) => item.returnedQuantity < item.quantity)
+                    .map((item) => `${item.asset?.name || `Activo #${item.assetId}`} (${item.quantity - item.returnedQuantity})`)
+                    .join(', ')
+              },
+              { key: 'status', label: 'Estado' },
+              {
+                key: 'action',
+                label: 'Acción',
+                render: (loan) => (
+                  <button
+                    type="button"
+                    className={selectedLoanId === loan.id ? 'btn-primary' : 'btn-secondary'}
+                    onClick={() => setSelectedLoanId(loan.id)}
+                  >
+                    {selectedLoanId === loan.id ? 'Seleccionado' : 'Seleccionar'}
+                  </button>
+                )
+              }
+            ]}
+            rows={filteredLoans}
+          />
+        )}
+      </section>
       <form className="card space-y-3" onSubmit={submit}>
-        <select value={form.loanId} onChange={(e) => onLoanChange(e.target.value)}>
-          <option value="">Seleccione préstamo</option>
-          {loans.map((loan) => <option key={loan.id} value={loan.id}>Préstamo #{loan.id}</option>)}
-        </select>
-        {loanDetail ? <p className="text-sm text-[#6b6477]">Empleado: {loanDetail.employee?.firstName} {loanDetail.employee?.lastName}</p> : null}
-        {form.items.map((item, idx) => (
-          <div key={idx} className="grid gap-2 md:grid-cols-4">
-            <input disabled value={`Item préstamo #${item.loanItemId}`} />
-            <input type="number" min="1" value={item.quantity} onChange={(e) => setItem(idx, { quantity: Number(e.target.value) })} />
-            <select value={item.itemCondition} onChange={(e) => setItem(idx, { itemCondition: e.target.value })}><option>GOOD</option><option>FAIR</option><option>DAMAGED</option><option>NON_FUNCTIONAL</option></select>
-            <input placeholder="Observación" value={item.observations} onChange={(e) => setItem(idx, { observations: e.target.value })} />
-          </div>
-        ))}
-        <button className="btn-primary">Registrar devolución</button>
+      <p className="section-subtitle">Formulario de devolución</p>
+        <div className="rounded-xl border border-[#e6deef] bg-[#f8f5fc] p-3 text-sm text-[#493b5f]">
+          {selectedLoan ? (
+            <>
+              <p>
+                <span className="font-semibold">Préstamo:</span> #{selectedLoan.id} — {fullName(selectedLoan.employee)}
+              </p>
+              <p className="mt-1">
+                <span className="font-semibold">Ítems pendientes:</span>{' '}
+                {pendingItems.map((item) => `${item.assetName} (${item.pendingQuantity})`).join(', ')}
+              </p>
+            </>
+          ) : (
+            <p>Selecciona un préstamo activo para habilitar el registro.</p>
+          )}
+        </div>
+
+        <div className="grid gap-3 md:grid-cols-3">
+          <select
+            value={form.itemCondition}
+            onChange={(e) => setForm((prev) => ({ ...prev, itemCondition: e.target.value }))}
+            disabled={!selectedLoan}
+          >
+            <option value="GOOD">Estado entrega: Bueno</option>
+            <option value="FAIR">Estado entrega: Regular</option>
+            <option value="DAMAGED">Estado entrega: Dañado</option>
+            <option value="NON_FUNCTIONAL">Estado entrega: No funcional</option>
+          </select>
+          <input
+            type="datetime-local"
+            value={form.returnDate}
+            onChange={(e) => setForm((prev) => ({ ...prev, returnDate: e.target.value }))}
+            disabled={!selectedLoan}
+          />
+          <input
+            placeholder="Observación"
+            value={form.observations}
+            onChange={(e) => setForm((prev) => ({ ...prev, observations: e.target.value }))}
+            disabled={!selectedLoan}
+          />
+        </div>
+
+        <button className="btn-primary" disabled={!selectedLoan || submitting}>
+          {submitting ? 'Registrando...' : 'Registrar devolución'}
+        </button>
       </form>
     </div>
   );
