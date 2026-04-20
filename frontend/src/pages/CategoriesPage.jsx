@@ -17,10 +17,26 @@ export default function CategoriesPage() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(initial);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
 
   const load = async () => {
-    const { data } = await CategoryApi.list({ page: 1, pageSize: 100 });
-    setRows(data.body.items);
+    setIsLoading(true);
+    try {
+      const { data } = await CategoryApi.list({ page: 1, pageSize: 100 });
+      setRows(data.body.items);
+    } catch (error) {
+      push(getErrorMessage(error), 'error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCreate = () => {
+    setEditing(null);
+    setForm(initial);
+    setOpen(true);
   };
 
   useEffect(() => {
@@ -29,21 +45,30 @@ export default function CategoriesPage() {
 
   const save = async (event) => {
     event.preventDefault();
+    setIsSaving(true);
     try {
-      if (editing) await CategoryApi.update(editing.id, form);
-      else await CategoryApi.create(form);
+      const payload = {
+        name: form.name?.trim(),
+        description: form.description?.trim() || '',
+        isActive: form.isActive
+      };
+      if (editing) await CategoryApi.update(editing.id, payload);
+      else await CategoryApi.create(payload);
       setOpen(false);
       setEditing(null);
       setForm(initial);
       await load();
+      push(editing ? 'Categoría actualizada correctamente' : 'Categoría creada correctamente', 'success');
     } catch (error) {
       push(getErrorMessage(error), 'error');
+      } finally {
+      setIsSaving(false);
     }
   };
 
   return (
     <div>
-      <PageHeader title="Categorías" actions={canManage ? <button className="btn-primary" onClick={() => setOpen(true)}>Nueva categoría</button> : null} />
+      <PageHeader title="Categorías" actions={canManage ? <button className="btn-primary" onClick={handleCreate}>Nueva categoría</button> : null} />
       <Table
         columns={[
           { key: 'name', label: 'Nombre' },
@@ -52,6 +77,7 @@ export default function CategoriesPage() {
           { key: 'actions', label: 'Acciones', render: (row) => canManage ? <button className="btn-secondary py-1.5" onClick={() => { setEditing(row); setForm(row); setOpen(true); }}>Editar</button> : '—' }
         ]}
         rows={rows}
+        loading={isLoading}
       />
 
       <Modal open={open} onClose={() => setOpen(false)} title={editing ? 'Editar categoría' : 'Nueva categoría'}>
@@ -59,7 +85,7 @@ export default function CategoriesPage() {
           <input placeholder="Nombre" value={form.name} onChange={(e) => setForm((v) => ({ ...v, name: e.target.value }))} />
           <textarea placeholder="Descripción" value={form.description || ''} onChange={(e) => setForm((v) => ({ ...v, description: e.target.value }))} />
           <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.isActive} onChange={(e) => setForm((v) => ({ ...v, isActive: e.target.checked }))} /> Activa</label>
-          <button className="btn-primary">Guardar</button>
+          <button className="btn-primary" disabled={isSaving}>{isSaving ? 'Guardando...' : 'Guardar'}</button>
         </form>
       </Modal>
     </div>
