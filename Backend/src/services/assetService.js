@@ -3,6 +3,17 @@ const { assetRepository } = require('../repositories/assetRepository');
 const { categoryRepository } = require('../repositories/categoryRepository');
 const { auditRepository } = require('../repositories/auditRepository');
 
+const toPositiveInt = (value, fallback) => {
+  const parsed = Number.parseInt(String(value ?? ''), 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+};
+
+const normalizeListParams = (params = {}) => {
+  const page = toPositiveInt(params.page, 1);
+  const pageSize = Math.min(toPositiveInt(params.pageSize, 20), 100);
+  return { page, pageSize };
+};
+
 const paginate = ({ page, pageSize }) => ({ skip: (page - 1) * pageSize, take: pageSize });
 
 const assetService = {
@@ -14,7 +25,8 @@ const assetService = {
     await auditRepository.create({ performedByUserId: actorUserId, entityType: 'ASSET', entityId: created.id, assetId: created.id, action: 'CREATE', summary: `Activo ${created.assetCode} creado` });
     return created;
   },
-  list: async ({ page, pageSize }) => {
+  list: async (params) => {
+    const { page, pageSize } = normalizeListParams(params);
     const [items, total] = await Promise.all([assetRepository.list(paginate({ page, pageSize })), assetRepository.count()]);
     return { items, pagination: { page, pageSize, total } };
   },
