@@ -2,6 +2,13 @@ const createError = require('http-errors');
 const { employeeRepository } = require('../repositories/employeeRepository');
 const { auditRepository } = require('../repositories/auditRepository');
 
+const normalizePagination = ({ page, pageSize }) => {
+  const safePage = Math.max(Number.parseInt(page, 10) || 1, 1);
+  const safePageSize = Math.min(Math.max(Number.parseInt(pageSize, 10) || 20, 1), 100);
+  return { page: safePage, pageSize: safePageSize };
+};
+
+
 const paginate = ({ page, pageSize }) => ({ skip: (page - 1) * pageSize, take: pageSize });
 
 const employeeService = {
@@ -11,8 +18,9 @@ const employeeService = {
     return created;
   },
   list: async ({ page, pageSize }) => {
-    const [items, total] = await Promise.all([employeeRepository.list(paginate({ page, pageSize })), employeeRepository.count()]);
-    return { items, pagination: { page, pageSize, total } };
+    const normalized = normalizePagination({ page, pageSize });
+    const [items, total] = await Promise.all([employeeRepository.list(paginate(normalized)), employeeRepository.count()]);
+    return { items, pagination: { ...normalized, total } };
   },
   findById: async (id) => {
     const found = await employeeRepository.findById(id);

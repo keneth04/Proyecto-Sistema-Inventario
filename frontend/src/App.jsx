@@ -30,7 +30,6 @@ export default function App() {
           <Route element={<RoleRoute allowedRoles={['ADMIN', 'INVENTORY_MANAGER']} />}>
             <Route path="/assets/new" element={<AssetFormPage />} />
             <Route path="/assets/:id/edit" element={<AssetFormPage />} />
-            <Route path="/employees/new" element={<EmployeeFormPage />} />
             <Route path="/employees/:id/edit" element={<EmployeeFormPage />} />
             <Route path="/loans/new" element={<LoanCreatePage />} />
             <Route path="/returns/new" element={<ReturnCreatePage />} />
