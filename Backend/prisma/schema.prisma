@@ -25,14 +25,18 @@ model Role {
 
 /// Usuario interno que opera el sistema (entrega, recibe, administra).
 model User {
-  id           Int        @id @default(autoincrement())
-  roleId       Int
-  firstName    String     @db.VarChar(80)
-  lastName     String     @db.VarChar(80)
-  email        String     @unique @db.VarChar(120)
-  passwordHash String     @db.VarChar(255)
-  status       UserStatus @default(ACTIVE)
-  lastLoginAt  DateTime?
+   id                     Int        @id @default(autoincrement())
+  roleId                 Int
+  firstName              String     @db.VarChar(80)
+  lastName               String     @db.VarChar(80)
+  email                  String     @unique @db.VarChar(120)
+  passwordHash           String     @db.VarChar(255)
+  status                 UserStatus @default(ACTIVE)
+  lastLoginAt            DateTime?
+  resetPasswordTokenHash String?    @db.VarChar(64)
+  resetPasswordExpiresAt DateTime?
+  resetPasswordUsedAt    DateTime?
+
 
   role               Role                @relation(fields: [roleId], references: [id], onUpdate: Cascade, onDelete: Restrict)
   deliveredLoans     Loan[]              @relation("LoanDeliveredByUser")
@@ -45,6 +49,7 @@ model User {
 
   @@index([roleId])
   @@index([status])
+  @@index([resetPasswordExpiresAt])
   @@map("users")
 }
 
@@ -154,7 +159,7 @@ model LoanItem {
   returnedQuantity Int     @default(0)
   notes            String? @db.VarChar(255)
 
- loan        Loan         @relation(fields: [loanId], references: [id], onUpdate: Cascade, onDelete: Restrict)
+    loan        Loan         @relation(fields: [loanId], references: [id], onUpdate: Cascade, onDelete: Restrict)
   asset       Asset        @relation(fields: [assetId], references: [id], onUpdate: Cascade, onDelete: Restrict)
   returnItems ReturnItem[]
 
@@ -172,8 +177,9 @@ model Return {
   loanId           Int
   employeeId       Int
   receivedByUserId Int
-  returnDate       DateTime  @default(now())
-  observations     String?   @db.Text
+  returnDate       DateTime @default(now())
+  observations     String?  @db.Text
+
 
   loan               Loan                @relation(fields: [loanId], references: [id], onUpdate: Cascade, onDelete: Restrict)
   employee           Employee            @relation(fields: [employeeId], references: [id], onUpdate: Cascade, onDelete: Restrict)
@@ -216,22 +222,22 @@ model ReturnItem {
 
 /// Kardex simplificado: toda entrada/salida/ajuste de stock.
 model InventoryMovement {
- id                Int                   @id @default(autoincrement())
+  id                Int                   @id @default(autoincrement())
   assetId           Int
   performedByUserId Int
-  employeeId      Int?
-  loanId          Int?
-  returnId        Int?
-  movementType    InventoryMovementType
-  quantityDelta   Int
-  resultingStock  Int
-  reason          String?             @db.VarChar(255)
+   employeeId        Int?
+  loanId            Int?
+  returnId          Int?
+  movementType      InventoryMovementType
+  quantityDelta     Int
+  resultingStock    Int
+  reason            String?               @db.VarChar(255)
 
-  asset          Asset     @relation(fields: [assetId], references: [id], onUpdate: Cascade, onDelete: Restrict)
-  performedByUser User     @relation(fields: [performedByUserId], references: [id], onUpdate: Cascade, onDelete: Restrict)
-  employee       Employee? @relation(fields: [employeeId], references: [id], onUpdate: Cascade, onDelete: SetNull)
-  loan           Loan?     @relation(fields: [loanId], references: [id], onUpdate: Cascade, onDelete: SetNull)
-  return         Return?   @relation(fields: [returnId], references: [id], onUpdate: Cascade, onDelete: SetNull)
+  asset           Asset     @relation(fields: [assetId], references: [id], onUpdate: Cascade, onDelete: Restrict)
+  performedByUser User      @relation(fields: [performedByUserId], references: [id], onUpdate: Cascade, onDelete: Restrict)
+  employee        Employee? @relation(fields: [employeeId], references: [id], onUpdate: Cascade, onDelete: SetNull)
+  loan            Loan?     @relation(fields: [loanId], references: [id], onUpdate: Cascade, onDelete: SetNull)
+  return          Return?   @relation(fields: [returnId], references: [id], onUpdate: Cascade, onDelete: SetNull)
 
   createdAt DateTime @default(now())
 
@@ -244,24 +250,24 @@ model InventoryMovement {
 
 /// Auditoría transversal de acciones críticas del dominio.
 model AuditLog {
-  id             Int            @id @default(autoincrement())
+  id                Int             @id @default(autoincrement())
   performedByUserId Int
-  employeeId      Int?
-  entityType      AuditEntityType
-  entityId        Int
-  action          AuditActionType
-  summary         String         @db.VarChar(255)
-  metadata        Json?
+  id                Int             @id @default(autoincr employeeId        Int?
+  entityType        AuditEntityType
+  entityId          Int
+  action            AuditActionType
+  summary           String          @db.VarChar(255)
+  metadata          Json?
 
-  performedByUser User           @relation(fields: [performedByUserId], references: [id], onUpdate: Cascade, onDelete: Restrict)
-  employee        Employee?      @relation(fields: [employeeId], references: [id], onUpdate: Cascade, onDelete: SetNull)
-  asset           Asset?         @relation(fields: [assetId], references: [id], onUpdate: Cascade, onDelete: SetNull)
-  loan            Loan?          @relation(fields: [loanId], references: [id], onUpdate: Cascade, onDelete: SetNull)
-  return          Return?        @relation(fields: [returnId], references: [id], onUpdate: Cascade, onDelete: SetNull)
+  performedByUser User      @relation(fields: [performedByUserId], references: [id], onUpdate: Cascade, onDelete: Restrict)
+  employee        Employee? @relation(fields: [employeeId], references: [id], onUpdate: Cascade, onDelete: SetNull)
+  asset           Asset?    @relation(fields: [assetId], references: [id], onUpdate: Cascade, onDelete: SetNull)
+  loan            Loan?     @relation(fields: [loanId], references: [id], onUpdate: Cascade, onDelete: SetNull)
+  return          Return?   @relation(fields: [returnId], references: [id], onUpdate: Cascade, onDelete: SetNull)
 
-  assetId         Int?
-  loanId          Int?
-  returnId        Int?
+  assetId  Int?
+  loanId   Int?
+  returnId Int?ement())
 
   createdAt DateTime @default(now())
 

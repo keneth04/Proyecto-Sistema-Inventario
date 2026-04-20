@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { AuthApi } from '../api/endpoints';
 import Spinner from '../components/Spinner';
 import { useAuth } from '../auth/AuthContext';
@@ -54,6 +54,12 @@ export default function LoginPage() {
           value={form.password}
           onChange={(e) => setForm((prev) => ({ ...prev, password: e.target.value }))}
         />
+
+        <div className="mb-4 text-right">
+          <Link to="/forgot-password" className="text-sm font-medium text-[#6f3ff5] hover:underline">
+            ¿Olvidaste tu contraseña?
+          </Link>
+        </div>
 
         {error ? <p className="mb-4 rounded-lg bg-red-50 p-2 text-sm text-red-700">{error}</p> : null}
         <button className="btn-primary w-full" disabled={loading}>

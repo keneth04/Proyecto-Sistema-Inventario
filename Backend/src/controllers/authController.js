@@ -17,6 +17,26 @@ const authController = {
     } catch (error) {
       return next(error);
     }
+    },
+  forgotPassword: async (req, res, next) => {
+    try {
+      await authService.forgotPassword(req.body);
+      return Response.success(
+        res,
+        200,
+        'Si el correo está registrado, recibirás instrucciones para recuperar tu contraseña.'
+      );
+    } catch (error) {
+      return next(error);
+    }
+  },
+  resetPassword: async (req, res, next) => {
+    try {
+      await authService.resetPassword(req.body);
+      return Response.success(res, 200, 'Contraseña actualizada correctamente');
+    } catch (error) {
+      return next(error);
+    }
   }
 };
 

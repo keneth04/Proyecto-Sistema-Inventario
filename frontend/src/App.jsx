@@ -14,6 +14,8 @@ import ReturnCreatePage from './pages/ReturnCreatePage';
 import AuditPage from './pages/AuditPage';
 import UnauthorizedPage from './pages/UnauthorizedPage';
 import NotFoundPage from './pages/NotFoundPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 import ProtectedRoute from './routes/ProtectedRoute';
 import RoleRoute from './routes/RoleRoute';
 
@@ -21,7 +23,9 @@ export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
-       <Route path="/403" element={<UnauthorizedPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
+      <Route path="/403" element={<UnauthorizedPage />} />
 
       <Route element={<ProtectedRoute />}>
         <Route element={<AppLayout />}>

@@ -72,6 +72,23 @@ const authSchemas = {
       email: asEmail({ value: body.email, field: 'email', source }),
       password: asString({ value: body.password, field: 'password', source, min: 8, max: 100 })
     };
+    },
+  forgotPassword: (body) => {
+    const source = 'body';
+    assertObject(body, source);
+    allowOnly(body, ['email'], source);
+    return {
+      email: asEmail({ value: body.email, field: 'email', source })
+    };
+  },
+  resetPassword: (body) => {
+    const source = 'body';
+    assertObject(body, source);
+    allowOnly(body, ['token', 'newPassword'], source);
+    return {
+      token: asString({ value: body.token, field: 'token', source, min: 32, max: 300 }),
+      newPassword: asString({ value: body.newPassword, field: 'newPassword', source, min: 8, max: 100 })
+    };
   }
 };
 

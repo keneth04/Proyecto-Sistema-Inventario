@@ -6,6 +6,16 @@ const userRepository = {
   create: (data) => prisma.user.create({ data, include: includeRole }),
   findByEmail: (email) => prisma.user.findUnique({ where: { email }, include: includeRole }),
   findById: (id) => prisma.user.findUnique({ where: { id }, include: includeRole }),
+  findByResetTokenHash: (resetPasswordTokenHash) => prisma.user.findFirst({
+    where: {
+      resetPasswordTokenHash,
+      resetPasswordExpiresAt: {
+        gt: new Date()
+      },
+      status: 'ACTIVE'
+    },
+    include: includeRole
+  }),
   list: ({ skip, take }) => prisma.user.findMany({ skip, take, orderBy: { id: 'desc' }, include: includeRole }),
   count: () => prisma.user.count(),
   update: (id, data) => prisma.user.update({ where: { id }, data, include: includeRole }),
