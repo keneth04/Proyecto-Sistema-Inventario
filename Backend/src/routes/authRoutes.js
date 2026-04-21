@@ -14,7 +14,12 @@ router.post(
   validateRequest({ body: authSchemas.forgotPassword }),
   authController.forgotPassword
 );
-router.post('/reset-password', validateRequest({ body: authSchemas.resetPassword }), authController.resetPassword);
+router.post(
+  '/reset-password',
+  AuthRateLimiters.resetPassword,
+  validateRequest({ body: authSchemas.resetPassword }),
+  authController.resetPassword
+);
 router.get('/me', AuthMiddleware, authController.me);
 
 module.exports = { authRoutes: router };

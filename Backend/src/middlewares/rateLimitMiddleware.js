@@ -57,6 +57,8 @@ setInterval(() => {
 
 const authWindowMs = Config.rateLimit.auth.windowMs;
 const authMax = Config.rateLimit.auth.max;
+const resetPasswordWindowMs = Config.rateLimit.auth.resetPasswordWindowMs;
+const resetPasswordMax = Config.rateLimit.auth.resetPasswordMax;
 
 module.exports.AuthRateLimiters = {
   login: createRateLimiter({
@@ -72,5 +74,12 @@ module.exports.AuthRateLimiters = {
     max: authMax,
     message: 'Demasiadas solicitudes de recuperación. Intenta nuevamente en unos minutos.',
     keyGenerator: (req) => `${normalizeIp(req.ip)}:${toEmail(req)}`
+      }),
+  resetPassword: createRateLimiter({
+    name: 'auth-reset-password',
+    windowMs: resetPasswordWindowMs,
+    max: resetPasswordMax,
+    message: 'Demasiados intentos de restablecimiento. Intenta nuevamente en unos minutos.',
+    keyGenerator: (req) => normalizeIp(req.ip)
   })
 };

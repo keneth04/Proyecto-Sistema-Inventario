@@ -10,13 +10,21 @@ const signAccessToken = (user) => {
       email: user.email
     },
     Config.jwtSecret,
-    { expiresIn: Config.jwtExpiresIn }
+    {
+      expiresIn: Config.jwtExpiresIn,
+      issuer: 'inventory-system',
+      audience: 'inventory-web'
+    }
   );
 };
 
 const verifyAccessToken = (token) => {
   try {
-    return jwt.verify(token, Config.jwtSecret);
+    return jwt.verify(token, Config.jwtSecret, {
+      algorithms: ['HS256'],
+      issuer: 'inventory-system',
+      audience: 'inventory-web'
+    });
   } catch (_error) {
     throw new createError.Unauthorized('Token inválido o expirado');
   }

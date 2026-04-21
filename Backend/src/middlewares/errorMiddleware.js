@@ -8,7 +8,10 @@ module.exports.ErrorMiddleware = (err, req, res, next) => {
   }
 
   const statusCode = err.statusCode || 500;
-  const message = err.message || 'Error interno del servidor';
+  const message =
+    statusCode >= 500
+      ? 'Error interno del servidor'
+      : (err.message || 'Error interno del servidor');
   const requestId = req?.requestId;
   const details = Array.isArray(err.details) ? err.details : undefined;
 

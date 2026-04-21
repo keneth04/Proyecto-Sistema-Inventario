@@ -13,7 +13,11 @@ const parseCookies = (cookieHeader = '') => {
 
       const key = pair.slice(0, separatorIndex).trim();
       const value = pair.slice(separatorIndex + 1).trim();
-      acc[key] = decodeURIComponent(value);
+      try {
+        acc[key] = decodeURIComponent(value);
+      } catch (_error) {
+        acc[key] = value;
+      }
       return acc;
     }, {});
 };
