@@ -46,8 +46,28 @@ const assetService = {
     return updated;
   },
   changeStatus: async (id, status, actorUserId) => {
+    const current = await assetService.findById(id);
     const updated = await assetRepository.update(id, { status });
-    await auditRepository.create({ performedByUserId: actorUserId, entityType: 'ASSET', entityId: updated.id, assetId: updated.id, action: 'STATUS_CHANGED', summary: `Estado de activo ${updated.assetCode} cambiado a ${status}` });
+    await auditRepository.create({
+      performedByUserId: actorUserId,
+      entityType: 'ASSET',
+      entityId: updated.id,
+      assetId: updated.id,
+      action: 'STATUS_CHANGED',
+      summary: `Estado de activo ${updated.assetCode} cambiado de ${current.status} a ${status}`,
+      metadata: { previousStatus: current.status, newStatus: status }
+    });
+    if (status === 'RETIRED' && current.status !== 'RETIRED') {
+      await auditRepository.create({
+        performedByUserId: actorUserId,
+        entityType: 'ASSET',
+        entityId: updated.id,
+        assetId: updated.id,
+        action: 'DELETE',
+        summary: `Activo ${updated.assetCode} retirado (eliminación lógica)`,
+        metadata: { logicalDeletion: true, status: updated.status }
+      });
+    }
     return updated;
   }
 };
