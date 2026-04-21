@@ -25,6 +25,14 @@ const inventoryController = {
     } catch (error) {
       return next(error);
     }
+    },
+  executiveDashboard: async (_req, res, next) => {
+    try {
+      const data = await inventoryService.executiveDashboard();
+      return Response.success(res, 200, 'Dashboard ejecutivo de inventario', data);
+    } catch (error) {
+      return next(error);
+    }
   }
 };
 

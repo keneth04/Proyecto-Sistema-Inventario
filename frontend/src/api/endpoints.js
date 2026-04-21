@@ -40,7 +40,8 @@ export const ReturnApi = {
 export const InventoryApi = {
   summary: () => api.get('/inventory/summary'),
   availableAssets: () => api.get('/inventory/available-assets'),
-  loanedAssets: () => api.get('/inventory/loaned-assets')
+  loanedAssets: () => api.get('/inventory/loaned-assets'),
+  executiveDashboard: () => api.get('/inventory/executive-dashboard')
 };
 
 export const AuditApi = {
