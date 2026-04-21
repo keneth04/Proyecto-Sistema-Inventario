@@ -11,10 +11,43 @@ const toPositiveInt = (value, fallback) => {
 const normalizeListParams = (params = {}) => {
   const page = toPositiveInt(params.page, 1);
   const pageSize = Math.min(toPositiveInt(params.pageSize, 20), 100);
-  return { page, pageSize };
+  return {
+    page,
+    pageSize,
+    q: String(params.q ?? '').trim(),
+    status: String(params.status ?? 'ALL').trim().toUpperCase(),
+    categoryId: toPositiveInt(params.categoryId, null)
+  };
 };
 
 const paginate = ({ page, pageSize }) => ({ skip: (page - 1) * pageSize, take: pageSize });
+
+const buildWhereClause = ({ q, status, categoryId }) => {
+  const and = [];
+
+  if (q) {
+    and.push({
+      OR: [
+        { name: { contains: q } },
+        { brand: { contains: q } },
+        { serialNumber: { contains: q } },
+        { description: { contains: q } },
+        { assetCode: { contains: q } },
+        { category: { name: { contains: q } } }
+      ]
+    });
+  }
+
+  if (categoryId) and.push({ categoryId });
+
+  if (status === 'ACTIVE' || status === 'MAINTENANCE' || status === 'INACTIVE' || status === 'RETIRED') {
+    and.push({ status });
+  }
+
+  if (and.length === 0) return {};
+  return { AND: and };
+};
+
 
 const assetService = {
   create: async (payload, actorUserId) => {
@@ -26,8 +59,12 @@ const assetService = {
     return created;
   },
   list: async (params) => {
-    const { page, pageSize } = normalizeListParams(params);
-    const [items, total] = await Promise.all([assetRepository.list(paginate({ page, pageSize })), assetRepository.count()]);
+    const { page, pageSize, q, status, categoryId } = normalizeListParams(params);
+    const where = buildWhereClause({ q, status, categoryId });
+    const [items, total] = await Promise.all([
+      assetRepository.list({ ...paginate({ page, pageSize }), where }),
+      assetRepository.count(where)
+    ]);
     return { items, pagination: { page, pageSize, total } };
   },
   findById: async (id) => {

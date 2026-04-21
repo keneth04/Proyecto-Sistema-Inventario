@@ -41,6 +41,8 @@ const initialForm = {
   categoryId: ''
 };
 
+const PAGE_SIZE = 20;
+
 const toOperationalStatus = (asset) => {
   if (asset.status === 'MAINTENANCE') return 'MAINTENANCE';
   if (asset.status === 'INACTIVE') return 'INACTIVE';
@@ -66,6 +68,8 @@ export default function AssetsPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [categoryFilter, setCategoryFilter] = useState('ALL');
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
   const [open, setOpen] = useState(false);
   const [editingAsset, setEditingAsset] = useState(null);
   const [form, setForm] = useState(initialForm);
@@ -73,15 +77,27 @@ export default function AssetsPage() {
   const { push } = useToast();
   const canManage = ['ADMIN', 'INVENTORY_MANAGER'].includes(user?.role);
 
-  const load = async () => {
+  const load = async ({ nextPage = page, q = search, nextStatus = statusFilter, nextCategory = categoryFilter } = {}) => {
     setIsLoading(true);
     try {
+      const statusForApi = ['MAINTENANCE', 'INACTIVE', 'RETIRED', 'ACTIVE'].includes(nextStatus) ? nextStatus : undefined;
       const [{ data: assetsData }, { data: categoriesData }] = await Promise.all([
-        AssetApi.list({ page: 1, pageSize: 200 }),
-        CategoryApi.list({ page: 1, pageSize: 200 })
+          AssetApi.list({
+          page: nextPage,
+          pageSize: PAGE_SIZE,
+          q: q.trim() || undefined,
+          status: statusForApi,
+          categoryId: nextCategory === 'ALL' ? undefined : Number(nextCategory)
+        }),
+        categories.length === 0 ? CategoryApi.list({ page: 1, pageSize: 200 }) : Promise.resolve({ data: { body: { items: categories } } })
       ]);
+
       setRows(assetsData.body.items || []);
-      setCategories(categoriesData.body.items || []);
+      setTotal(assetsData.body.pagination?.total || 0);
+      setPage(assetsData.body.pagination?.page || nextPage);
+      if (categories.length === 0) {
+        setCategories(categoriesData.body.items || []);
+      }
     } catch (error) {
       push(getErrorMessage(error), 'error');
     } finally {
@@ -90,35 +106,19 @@ export default function AssetsPage() {
   };
 
   useEffect(() => {
-    load();
-  }, []);
+    const timer = setTimeout(() => {
+      load({ nextPage: 1 });
+    }, 250);
 
-   const filteredRows = useMemo(() => {
-    const normalizedSearch = search.trim().toLowerCase();
 
-    return rows.filter((row) => {
-      const operationalStatus = toOperationalStatus(row);
-      const matchesStatus = statusFilter === 'ALL' || statusFilter === operationalStatus;
-      const matchesCategory = categoryFilter === 'ALL' || String(row.categoryId) === categoryFilter;
+      return () => clearTimeout(timer);
+  }, [search, statusFilter, categoryFilter]);
 
-      if (!matchesStatus || !matchesCategory) return false;
-      if (!normalizedSearch) return true;
-
-      const searchable = [
-        row.name,
-        row.brand,
-        row.serialNumber,
-        row.category?.name,
-        row.description,
-        row.assetCode
-      ]
-        .filter(Boolean)
-        .join(' ')
-        .toLowerCase();
-
-      return searchable.includes(normalizedSearch);
-    });
-  }, [rows, search, statusFilter, categoryFilter]);
+      const filteredRows = useMemo(() => {
+    if (statusFilter === 'LOANED') return rows.filter((row) => toOperationalStatus(row) === 'LOANED');
+    if (statusFilter === 'AVAILABLE') return rows.filter((row) => toOperationalStatus(row) === 'AVAILABLE');
+    return rows;
+  }, [rows, statusFilter]);
 
   const openCreate = () => {
     if (categories.length === 0) {
@@ -162,16 +162,18 @@ export default function AssetsPage() {
         });
         push('Activo creado correctamente', 'success');
       }
-      await load();
+      await load({ nextPage: 1 });
       setOpen(false);
       setEditingAsset(null);
       setForm(initialForm);
     } catch (error) {
       push(getErrorMessage(error), 'error');
-      } finally {
+    } finally {
       setIsSaving(false);
     }
   };
+
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
     <div>
@@ -199,7 +201,7 @@ export default function AssetsPage() {
           ))}
         </select>
         <div className="rounded-xl border border-[#e7deef] bg-[#faf8fd] px-3 py-2 text-sm text-[#5b506c]">
-          {isLoading ? 'Cargando activos...' : `${filteredRows.length} activo(s) mostrado(s)`}
+          {isLoading ? 'Cargando activos...' : `${filteredRows.length} activo(s) en página / ${total} total`}
         </div>
       </div>
 
@@ -236,6 +238,14 @@ export default function AssetsPage() {
         ]}
         rows={filteredRows}
       />
+
+      <div className="mt-4 flex items-center justify-between rounded-xl border border-[#e7deef] bg-white px-4 py-3 text-sm text-[#5b506c]">
+        <span>Página {page} de {totalPages}</span>
+        <div className="flex gap-2">
+          <button className="btn-secondary py-1.5" disabled={page <= 1 || isLoading} onClick={() => load({ nextPage: page - 1 })}>Anterior</button>
+          <button className="btn-secondary py-1.5" disabled={page >= totalPages || isLoading} onClick={() => load({ nextPage: page + 1 })}>Siguiente</button>
+        </div>
+      </div>
 
       <Modal open={open} onClose={() => setOpen(false)} title={editingAsset ? 'Editar activo' : 'Nuevo activo'}>
         <form className="grid gap-3" onSubmit={submit}>

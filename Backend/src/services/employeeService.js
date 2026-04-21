@@ -8,6 +8,27 @@ const normalizePagination = ({ page, pageSize }) => {
   return { page: safePage, pageSize: safePageSize };
 };
 
+const buildWhereClause = ({ q, status }) => {
+  const where = {};
+  const search = String(q ?? '').trim();
+
+  if (search) {
+    where.OR = [
+      { employeeCode: { contains: search } },
+      { firstName: { contains: search } },
+      { lastName: { contains: search } },
+      { email: { contains: search } },
+      { department: { contains: search } },
+      { position: { contains: search } }
+    ];
+  }
+
+  if (status === 'ACTIVE' || status === 'INACTIVE') {
+    where.status = status;
+  }
+
+  return where;
+};
 
 const paginate = ({ page, pageSize }) => ({ skip: (page - 1) * pageSize, take: pageSize });
 
@@ -17,9 +38,13 @@ const employeeService = {
     await auditRepository.create({ performedByUserId: actorUserId, employeeId: created.id, entityType: 'EMPLOYEE', entityId: created.id, action: 'CREATE', summary: `Empleado ${created.employeeCode} creado` });
     return created;
   },
-  list: async ({ page, pageSize }) => {
+  list: async ({ page, pageSize, q, status }) => {
     const normalized = normalizePagination({ page, pageSize });
-    const [items, total] = await Promise.all([employeeRepository.list(paginate(normalized)), employeeRepository.count()]);
+    const where = buildWhereClause({ q, status });
+    const [items, total] = await Promise.all([
+      employeeRepository.list({ ...paginate(normalized), where }),
+      employeeRepository.count(where)
+    ]);
     return { items, pagination: { ...normalized, total } };
   },
   findById: async (id) => {

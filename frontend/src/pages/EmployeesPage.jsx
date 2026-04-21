@@ -19,21 +19,34 @@ const initialForm = {
   status: 'ACTIVE'
 };
 
+const PAGE_SIZE = 20;
+
 export default function EmployeesPage() {
   const [rows, setRows] = useState([]);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(initialForm);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [search, setSearch] = useState('');
+  const [status, setStatus] = useState('ALL');
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
   const { user } = useAuth();
   const { push } = useToast();
   const canManage = ['ADMIN', 'INVENTORY_MANAGER'].includes(user?.role);
 
-  const load = async () => {
+  const load = async ({ nextPage = page, q = search, nextStatus = status } = {}) => {
     setIsLoading(true);
     try {
-      const { data } = await EmployeeApi.list({ page: 1, pageSize: 100 });
-      setRows(data.body.items);
+      const { data } = await EmployeeApi.list({
+        page: nextPage,
+        pageSize: PAGE_SIZE,
+        q: q.trim() || undefined,
+        status: nextStatus === 'ALL' ? undefined : nextStatus
+      });
+      setRows(data.body.items || []);
+      setTotal(data.body.pagination?.total || 0);
+      setPage(data.body.pagination?.page || nextPage);
     } catch (error) {
       push(getErrorMessage(error), 'error');
     } finally {
@@ -41,10 +54,13 @@ export default function EmployeesPage() {
     }
   };
 
-
   useEffect(() => {
-    load();
-  }, []);
+    const timer = setTimeout(() => {
+      load({ nextPage: 1 });
+    }, 250);
+
+    return () => clearTimeout(timer);
+  }, [search, status]);
 
   const onOpenCreate = () => {
     setForm(initialForm);
@@ -66,7 +82,7 @@ export default function EmployeesPage() {
         status: form.status
       };
       await EmployeeApi.create(payload);
-      await load();
+      await load({ nextPage: 1 });
       setOpen(false);
       setForm(initialForm);
       push('Empleado creado correctamente', 'success');
@@ -77,6 +93,8 @@ export default function EmployeesPage() {
     }
   };
 
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
   return (
     <div>
       <PageHeader
@@ -84,6 +102,23 @@ export default function EmployeesPage() {
         subtitle="Administra colaboradores y mantén trazabilidad clara sobre préstamos activos y devoluciones."
         actions={canManage ? <button className="btn-primary" onClick={onOpenCreate}>Nuevo empleado</button> : null}
       />
+
+      <div className="card mb-4 grid gap-3 md:grid-cols-3">
+        <input
+          placeholder="Buscar por código, nombre, correo, área o cargo"
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+        />
+        <select value={status} onChange={(event) => setStatus(event.target.value)}>
+          <option value="ALL">Todos los estados</option>
+          <option value="ACTIVE">Activo</option>
+          <option value="INACTIVE">Inactivo</option>
+        </select>
+        <div className="rounded-xl border border-[#e7deef] bg-[#faf8fd] px-3 py-2 text-sm text-[#5b506c]">
+          {isLoading ? 'Cargando empleados...' : `${rows.length} empleado(s) en página / ${total} total`}
+        </div>
+      </div>
+
       <Table
         columns={[
           { key: 'employeeCode', label: 'Código' },
@@ -99,8 +134,17 @@ export default function EmployeesPage() {
           }
         ]}
         rows={rows}
-        loading={isLoading}
+
       />
+
+      <div className="mt-4 flex items-center justify-between rounded-xl border border-[#e7deef] bg-white px-4 py-3 text-sm text-[#5b506c]">
+        <span>Página {page} de {totalPages}</span>
+        <div className="flex gap-2">
+          <button className="btn-secondary py-1.5" disabled={page <= 1 || isLoading} onClick={() => load({ nextPage: page - 1 })}>Anterior</button>
+          <button className="btn-secondary py-1.5" disabled={page >= totalPages || isLoading} onClick={() => load({ nextPage: page + 1 })}>Siguiente</button>
+        </div>
+      </div>
+
       <Modal open={open} onClose={() => setOpen(false)} title="Nuevo empleado">
         <form className="grid gap-3 md:grid-cols-2" onSubmit={onCreate}>
           <input
