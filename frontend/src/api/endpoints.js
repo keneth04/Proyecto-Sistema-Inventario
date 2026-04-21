@@ -49,3 +49,11 @@ export const AuditApi = {
   byAsset: (assetId, params) => api.get(`/audit/asset/${assetId}`, { params }),
   byEmployee: (employeeId, params) => api.get(`/audit/employee/${employeeId}`, { params })
 };
+
+export const ReportApi = {
+  assetsByStatus: () => api.get('/reports/assets-by-status'),
+  activeLoans: () => api.get('/reports/active-loans'),
+  loanHistory: (params) => api.get('/reports/loan-history', { params }),
+  retiredAssets: () => api.get('/reports/retired-assets'),
+  inventoryGeneral: () => api.get('/reports/inventory-general')
+};

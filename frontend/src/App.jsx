@@ -12,6 +12,7 @@ import LoanCreatePage from './pages/LoanCreatePage';
 import ReturnsPage from './pages/ReturnsPage';
 import ReturnCreatePage from './pages/ReturnCreatePage';
 import AuditPage from './pages/AuditPage';
+import ReportsPage from './pages/ReportsPage';
 import UnauthorizedPage from './pages/UnauthorizedPage';
 import NotFoundPage from './pages/NotFoundPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
@@ -44,6 +45,7 @@ export default function App() {
           <Route path="/loans" element={<LoansPage />} />
           <Route path="/returns" element={<ReturnsPage />} />
           <Route path="/audit" element={<AuditPage />} />
+          <Route path="/reports" element={<ReportsPage />} />
         </Route>
       </Route>
 

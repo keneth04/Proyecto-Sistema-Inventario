@@ -8,6 +8,7 @@ const { loanController } = require('./loanController');
 const { returnController } = require('./returnController');
 const { inventoryController } = require('./inventoryController');
 const { auditController } = require('./auditController');
+const { reportController } = require('./reportController');
 
 module.exports = {
   authController,
@@ -18,5 +19,6 @@ module.exports = {
   loanController,
   returnController,
   inventoryController,
-  auditController
+  auditController,
+  reportController
 };

@@ -8,7 +8,8 @@ const links = [
   { to: '/categories', label: 'Categorías' },
   { to: '/loans', label: 'Préstamos' },
   { to: '/returns', label: 'Devoluciones' },
-  { to: '/audit', label: 'Trazabilidad' }
+  { to: '/audit', label: 'Trazabilidad' },
+  { to: '/reports', label: 'Reportes' }
 ];
 
 export default function AppLayout() {

@@ -8,6 +8,7 @@ const { loanRoutes } = require('./loanRoutes');
 const { returnRoutes } = require('./returnRoutes');
 const { inventoryRoutes } = require('./inventoryRoutes');
 const { auditRoutes } = require('./auditRoutes');
+const { reportRoutes } = require('./reportRoutes');
 const { AuthMiddleware } = require('../middlewares/authMiddleware');
 
 const router = express.Router();
@@ -22,5 +23,6 @@ router.use('/loans', loanRoutes);
 router.use('/returns', returnRoutes);
 router.use('/inventory', inventoryRoutes);
 router.use('/audit', auditRoutes);
+router.use('/reports', reportRoutes);
 
 module.exports = { apiRoutes: router };
