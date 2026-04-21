@@ -5,11 +5,12 @@ import PageHeader from '../components/ui/PageHeader';
 import Table from '../components/Table';
 import { formatDateTime, fullName } from '../utils/format';
 import { useAuth } from '../auth/AuthContext';
+import { canManageInventory } from '../utils/permissions';
 
 export default function ReturnsPage() {
   const [rows, setRows] = useState([]);
   const { user } = useAuth();
-  const canManage = ['ADMIN', 'INVENTORY_MANAGER'].includes(user?.role);
+  const canManage = canManageInventory(user);
 
   useEffect(() => {
     ReturnApi.list({ page: 1, pageSize: 100 }).then(({ data }) => setRows(data.body.items));

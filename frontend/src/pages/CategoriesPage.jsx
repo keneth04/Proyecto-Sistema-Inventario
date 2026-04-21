@@ -4,6 +4,7 @@ import PageHeader from '../components/ui/PageHeader';
 import Modal from '../components/Modal';
 import Table from '../components/Table';
 import { useAuth } from '../auth/AuthContext';
+import { canManageInventory } from '../utils/permissions';
 import { useToast } from '../components/Toast';
 import { getErrorMessage } from '../utils/format';
 
@@ -12,7 +13,7 @@ const initial = { name: '', description: '', isActive: true };
 export default function CategoriesPage() {
   const { user } = useAuth();
   const { push } = useToast();
-  const canManage = ['ADMIN', 'INVENTORY_MANAGER'].includes(user?.role);
+  const canManage = canManageInventory(user);
   const [rows, setRows] = useState([]);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(null);

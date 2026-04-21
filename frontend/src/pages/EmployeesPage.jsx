@@ -5,6 +5,7 @@ import PageHeader from '../components/ui/PageHeader';
 import Modal from '../components/Modal';
 import Table from '../components/Table';
 import { useAuth } from '../auth/AuthContext';
+import { canManageInventory } from '../utils/permissions';
 import { useToast } from '../components/Toast';
 import { getErrorMessage } from '../utils/format';
 
@@ -33,7 +34,7 @@ export default function EmployeesPage() {
   const [total, setTotal] = useState(0);
   const { user } = useAuth();
   const { push } = useToast();
-  const canManage = ['ADMIN', 'INVENTORY_MANAGER'].includes(user?.role);
+  const canManage = canManageInventory(user);
 
   const load = async ({ nextPage = page, q = search, nextStatus = status } = {}) => {
     setIsLoading(true);

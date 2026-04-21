@@ -5,6 +5,7 @@ import Modal from '../components/Modal';
 import Table from '../components/Table';
 import PageHeader from '../components/ui/PageHeader';
 import { useAuth } from '../auth/AuthContext';
+import { canManageInventory } from '../utils/permissions';
 import { useToast } from '../components/Toast';
 import { getErrorMessage } from '../utils/format';
 
@@ -75,7 +76,7 @@ export default function AssetsPage() {
   const [form, setForm] = useState(initialForm);
   const { user } = useAuth();
   const { push } = useToast();
-  const canManage = ['ADMIN', 'INVENTORY_MANAGER'].includes(user?.role);
+  const canManage = canManageInventory(user);
 
   const load = async ({ nextPage = page, q = search, nextStatus = statusFilter, nextCategory = categoryFilter } = {}) => {
     setIsLoading(true);

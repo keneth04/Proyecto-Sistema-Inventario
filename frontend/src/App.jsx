@@ -19,6 +19,7 @@ import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import ProtectedRoute from './routes/ProtectedRoute';
 import RoleRoute from './routes/RoleRoute';
+import { INVENTORY_MANAGER_ROLES } from './utils/permissions';
 
 export default function App() {
   return (
@@ -32,7 +33,7 @@ export default function App() {
         <Route element={<AppLayout />}>
           <Route path="/" element={<DashboardPage />} />
           <Route path="/assets" element={<AssetsPage />} />
-          <Route element={<RoleRoute allowedRoles={['ADMIN', 'INVENTORY_MANAGER']} />}>
+          <Route element={<RoleRoute allowedRoles={INVENTORY_MANAGER_ROLES} />}>
             <Route path="/assets/new" element={<AssetFormPage />} />
             <Route path="/assets/:id/edit" element={<AssetFormPage />} />
             <Route path="/employees/:id/edit" element={<EmployeeFormPage />} />
