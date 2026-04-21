@@ -22,7 +22,7 @@ export default function AppLayout() {
 
   return (
     <div className="min-h-screen bg-[#f3f1f8] text-[#261d35]">
-      <div className="mx-auto flex max-w-7xl gap-6 px-4 py-6">
+      <div className="mx-auto flex max-w-7xl gap-4 px-3 py-4 sm:gap-6 sm:px-4 sm:py-6">
         <aside className="sticky top-6 hidden h-[calc(100vh-3rem)] w-[240px] flex-shrink-0 flex-col justify-between rounded-2xl border border-[#e6deef] bg-white p-4 shadow-[0_10px_30px_rgba(118,84,146,0.08)] lg:flex">
           <div>
             <div className="mb-5 border-b border-[#efe8f6] pb-4">
@@ -52,7 +52,7 @@ export default function AppLayout() {
         </aside>
 
         <div className="min-w-0 flex-1">
-          <header className="mb-6 rounded-2xl border border-[#e6deef] bg-white px-5 py-4 shadow-[0_8px_24px_rgba(118,84,146,0.08)]">
+          <header className="mb-4 rounded-2xl border border-[#e6deef] bg-white px-4 py-4 shadow-[0_8px_24px_rgba(118,84,146,0.08)] sm:mb-6 sm:px-5">
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
                 <p className="text-xs uppercase tracking-[0.12em] text-[#765492]">Sistema de inventario y préstamos</p>
@@ -67,7 +67,7 @@ export default function AppLayout() {
                   key={link.to}
                   to={link.to}
                   className={({ isActive }) =>
-                    `whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold transition ${isActive ? 'bg-[#765492] text-white' : 'border border-[#e3dcef] bg-white text-[#433257]'}`
+                    `whitespace-nowrap rounded-lg px-3 py-2 text-xs font-semibold transition sm:text-sm ${isActive ? 'bg-[#765492] text-white' : 'border border-[#e3dcef] bg-white text-[#433257]'}`
                   }
                 >
                   {link.label}
