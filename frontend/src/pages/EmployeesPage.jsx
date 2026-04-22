@@ -98,14 +98,14 @@ export default function EmployeesPage() {
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
-    <div>
+    <div className="page-content">
       <PageHeader
         title="Empleados"
         subtitle="Administra colaboradores y mantén trazabilidad clara sobre préstamos activos y devoluciones."
         actions={canManage ? <button className="btn-primary" onClick={onOpenCreate}>Nuevo empleado</button> : null}
       />
 
-      <div className="card mb-4 grid gap-3 md:grid-cols-3">
+      <div className="list-toolbar md:grid-cols-3">
         <input
           placeholder="Buscar por código, nombre, correo, área o cargo"
           value={search}
@@ -116,7 +116,7 @@ export default function EmployeesPage() {
           <option value="ACTIVE">Activo</option>
           <option value="INACTIVE">Inactivo</option>
         </select>
-        <div className="rounded-xl border border-[#e7deef] bg-[#faf8fd] px-3 py-2 text-sm text-[#5b506c]">
+        <div className="info-chip">
           {isLoading ? 'Cargando empleados...' : `${rows.length} empleado(s) en página / ${total} total`}
         </div>
       </div>
@@ -139,7 +139,7 @@ export default function EmployeesPage() {
 
       />
 
-      <div className="mt-4 flex items-center justify-between rounded-xl border border-[#e7deef] bg-white px-4 py-3 text-sm text-[#5b506c]">
+      <div className="list-footer">
         <span>Página {page} de {totalPages}</span>
         <div className="flex gap-2">
           <button className="btn-secondary py-1.5" disabled={page <= 1 || isLoading} onClick={() => load({ nextPage: page - 1 })}>Anterior</button>

@@ -69,7 +69,7 @@ export default function CategoriesPage() {
   };
 
   return (
-    <div>
+    <div className="page-content">
       <PageHeader
         title="Categorías"
         subtitle="Organiza el inventario en grupos claros para facilitar filtros, reportes y control operativo."

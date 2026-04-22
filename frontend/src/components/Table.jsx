@@ -1,4 +1,4 @@
-export default function Table({ columns, rows }) {
+export default function Table({ columns, rows, loading = false, emptyLabel = 'Sin datos' }) {
   const mobileTitleKey = columns[0]?.key;
   return (
     <div className="rounded-2xl border border-[#e3dcea] bg-white shadow-[0_8px_24px_rgba(90,64,118,0.10)]">
@@ -15,7 +15,7 @@ export default function Table({ columns, rows }) {
             {rows.length === 0 && (
               <tr>
                 <td colSpan={columns.length} className="px-4 py-8 text-center text-[#6b7280]">
-                  Sin datos
+                  {loading ? 'Cargando registros...' : emptyLabel}
                 </td>
               </tr>
             )}
@@ -32,7 +32,7 @@ export default function Table({ columns, rows }) {
 
       <div className="divide-y divide-[#efe8f6] md:hidden">
         {rows.length === 0 ? (
-          <p className="px-4 py-8 text-center text-sm text-[#6b7280]">Sin datos</p>
+           <p className="px-4 py-8 text-center text-sm text-[#6b7280]">{loading ? 'Cargando registros...' : emptyLabel}</p>
         ) : (
           rows.map((row, idx) => (
             <article key={row.id || idx} className="space-y-2 px-4 py-3">

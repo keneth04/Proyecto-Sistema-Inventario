@@ -17,7 +17,7 @@ export default function ReturnsPage() {
   }, []);
 
   return (
-    <div>
+    <div className="page-content">
       <PageHeader
         title="Devoluciones"
         subtitle="Registra recepciones, valida estado de entrega y cierra préstamos pendientes."

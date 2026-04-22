@@ -68,9 +68,9 @@ export default function AuditPage() {
   }, []);
 
   return (
-    <div>
+    <div className="page-content">
       <PageHeader title="Trazabilidad" subtitle="Historial de acciones del sistema" />
-      <div className="card mb-4 grid gap-2 md:grid-cols-4">
+      <div className="list-toolbar md:grid-cols-4">
         <input placeholder="Filtrar por activo ID" value={filters.assetId} onChange={(e) => setFilters((v) => ({ ...v, assetId: e.target.value }))} />
         <input placeholder="Filtrar por empleado ID" value={filters.employeeId} onChange={(e) => setFilters((v) => ({ ...v, employeeId: e.target.value }))} />
         <button className="btn-secondary" onClick={load}>Aplicar</button>

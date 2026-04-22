@@ -177,14 +177,14 @@ export default function AssetsPage() {
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
-    <div>
+    <div className="page-content">
       <PageHeader
         title="Activos"
         subtitle="Gestiona equipos y mobiliario con filtros rápidos y estado operativo en tiempo real."
         actions={canManage ? <button className="btn-primary" onClick={openCreate}>Nuevo activo</button> : null}
       />
 
-      <div className="card mb-4 grid gap-3 md:grid-cols-4">
+      <div className="list-toolbar md:grid-cols-4">
         <input
           placeholder="Buscar por nombre, marca, serial o descripción"
           value={search}
@@ -201,7 +201,7 @@ export default function AssetsPage() {
             <option key={category.id} value={String(category.id)}>{category.name}</option>
           ))}
         </select>
-        <div className="rounded-xl border border-[#e7deef] bg-[#faf8fd] px-3 py-2 text-sm text-[#5b506c]">
+        <div className="info-chip">
           {isLoading ? 'Cargando activos...' : `${filteredRows.length} activo(s) en página / ${total} total`}
         </div>
       </div>
@@ -240,7 +240,7 @@ export default function AssetsPage() {
         rows={filteredRows}
       />
 
-      <div className="mt-4 flex items-center justify-between rounded-xl border border-[#e7deef] bg-white px-4 py-3 text-sm text-[#5b506c]">
+      <div className="list-footer">
         <span>Página {page} de {totalPages}</span>
         <div className="flex gap-2">
           <button className="btn-secondary py-1.5" disabled={page <= 1 || isLoading} onClick={() => load({ nextPage: page - 1 })}>Anterior</button>

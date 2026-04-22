@@ -19,6 +19,22 @@
     @apply rounded-2xl border border-[#e8e1ef] bg-white p-5 shadow-[0_12px_32px_rgba(82,56,108,0.10)];
   }
 
+  .page-content {
+    @apply space-y-5;
+  }
+
+  .info-chip {
+    @apply rounded-xl border border-[#e7deef] bg-[#faf8fd] px-3 py-2 text-sm text-[#5b506c];
+  }
+
+  .list-toolbar {
+    @apply card mb-1 grid gap-3;
+  }
+
+  .list-footer {
+    @apply mt-1 flex flex-col gap-3 rounded-xl border border-[#e7deef] bg-white px-4 py-3 text-sm text-[#5b506c] sm:flex-row sm:items-center sm:justify-between;
+  }
+
   .btn-primary {
     @apply rounded-xl bg-[#775599] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition duration-200 hover:bg-[#6b4c8a] focus:outline-none focus:ring-4 focus:ring-[#77559940] disabled:cursor-not-allowed disabled:opacity-70;
   }

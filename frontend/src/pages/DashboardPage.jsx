@@ -44,7 +44,7 @@ export default function DashboardPage() {
   const { kpis, latestMovements } = dashboard;
 
   return (
-    <div>
+    <div className="page-content">
       <PageHeader
         title="Dashboard ejecutivo"
         subtitle="Visión operativa de activos, préstamos activos y movimientos recientes."

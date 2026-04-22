@@ -194,14 +194,14 @@ export default function ReportsPage() {
   };
 
   return (
-    <div>
+    <div className="page-content">
       <PageHeader
         title="Reportes"
         subtitle="Genera vistas exportables de inventario y préstamos para control operativo y decisiones ejecutivas."
         actions={<button className="btn-primary" onClick={exportCurrentReport}>Exportar Excel</button>}
       />
 
-      <div className="card mb-4 grid gap-3 md:grid-cols-4">
+      <div className="list-toolbar md:grid-cols-4">
         <select value={reportType} onChange={(event) => setReportType(event.target.value)}>
           {REPORT_OPTIONS.map((option) => (
             <option key={option.value} value={option.value}>{option.label}</option>

@@ -17,8 +17,8 @@ export default function LoansPage() {
   }, []);
 
   return (
-    <div>
-    <PageHeader
+    <div className="page-content">
+      <PageHeader
         title="Préstamos"
         subtitle="Controla asignaciones activas, responsables de entrega y fechas clave del proceso."
         actions={canManage ? <Link className="btn-primary" to="/loans/new">Registrar préstamo</Link> : null}
