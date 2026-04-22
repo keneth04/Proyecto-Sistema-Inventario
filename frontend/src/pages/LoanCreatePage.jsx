@@ -4,6 +4,7 @@ import { AssetApi, EmployeeApi, LoanApi } from '../api/endpoints';
 import PageHeader from '../components/ui/PageHeader';
 import { useToast } from '../components/Toast';
 import { getErrorMessage } from '../utils/format';
+import { useAuth } from '../auth/AuthContext';
 
 const createEmptyItem = () => ({ assetId: '', quantity: 1, notes: '' });
 
@@ -19,6 +20,7 @@ export default function LoanCreatePage() {
     items: [createEmptyItem()]
   });
   const { push } = useToast();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -120,7 +122,7 @@ export default function LoanCreatePage() {
   };
 
   return (
-   <div className="page-content">
+    <div className="page-content">
       <PageHeader
         title="Registrar préstamo"
         subtitle="Agrega varios activos, ajusta cantidades y confirma en un solo registro."
@@ -128,7 +130,7 @@ export default function LoanCreatePage() {
       />
 
       <form className="card space-y-5" onSubmit={submit}>
-        <div className="grid gap-3 md:grid-cols-2">
+        <div className="grid gap-3 md:grid-cols-3">
           <div className="space-y-1">
             <p className="section-subtitle">Empleado</p>
             <select
@@ -144,7 +146,15 @@ export default function LoanCreatePage() {
               ))}
             </select>
           </div>
-         <div className="space-y-1">
+        <div className="space-y-1">
+            <p className="section-subtitle">Entregado por</p>
+            <input
+              value={[user?.firstName, user?.lastName].filter(Boolean).join(' ') || user?.email || 'Usuario no disponible'}
+              disabled
+              readOnly
+            />
+          </div>
+          <div className="space-y-1 md:col-span-2">
             <p className="section-subtitle">Fechas</p>
             <div className="grid gap-3 sm:grid-cols-2">
               <input
