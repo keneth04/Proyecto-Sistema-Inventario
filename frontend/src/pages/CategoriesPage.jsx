@@ -21,7 +21,7 @@ export default function CategoriesPage() {
   const [form, setForm] = useState(initial);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-
+  const [switchingId, setSwitchingId] = useState(null);
 
   const load = async () => {
     setIsLoading(true);
@@ -41,6 +41,19 @@ export default function CategoriesPage() {
     setOpen(true);
   };
 
+  const handleToggleStatus = async (row) => {
+    setSwitchingId(row.id);
+    try {
+      await CategoryApi.update(row.id, { isActive: !row.isActive });
+      setRows((currentRows) => currentRows.map((item) => (item.id === row.id ? { ...item, isActive: !item.isActive } : item)));
+      push(`Categoría ${!row.isActive ? 'activada' : 'desactivada'} correctamente`, 'success');
+    } catch (error) {
+      push(getErrorMessage(error), 'error');
+    } finally {
+      setSwitchingId(null);
+    }
+  };
+
   useEffect(() => {
     load();
   }, []);
@@ -51,11 +64,10 @@ export default function CategoriesPage() {
     try {
       const payload = {
         name: form.name?.trim(),
-        description: form.description?.trim() || '',
-        isActive: form.isActive
+        description: form.description?.trim() || ''
       };
       if (editing) await CategoryApi.update(editing.id, payload);
-      else await CategoryApi.create(payload);
+      else await CategoryApi.create({ ...payload, isActive: true });
       setOpen(false);
       setEditing(null);
       setForm(initial);
@@ -63,7 +75,7 @@ export default function CategoriesPage() {
       push(editing ? 'Categoría actualizada correctamente' : 'Categoría creada correctamente', 'success');
     } catch (error) {
       push(getErrorMessage(error), 'error');
-      } finally {
+    } finally {
       setIsSaving(false);
     }
   };
@@ -79,23 +91,59 @@ export default function CategoriesPage() {
         columns={[
           { key: 'name', label: 'Nombre' },
           { key: 'description', label: 'Descripción' },
-          { key: 'isActive', label: 'Estado', render: (row) => (row.isActive ? 'Activa' : 'Inactiva') },
-          { key: 'actions', label: 'Acciones', render: (row) => canManage ? <button className="btn-secondary py-1.5" onClick={() => { setEditing(row); setForm(row); setOpen(true); }}>Editar</button> : '—' }
+          {
+            key: 'isActive',
+            label: 'Estado',
+            render: (row) => (
+              <div className="flex items-center gap-3">
+                {canManage ? (
+                  <ToggleSwitch
+                    checked={row.isActive}
+                    onChange={() => handleToggleStatus(row)}
+                    disabled={switchingId === row.id}
+                    label={row.isActive ? 'Activa' : 'Inactiva'}
+                  />
+                ) : (
+                  <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${row.isActive ? 'bg-[#e9fbf5] text-[#0f8a6e]' : 'bg-[#f3f4f6] text-[#6b7280]'}`}>
+                    {row.isActive ? 'Activa' : 'Inactiva'}
+                  </span>
+                )}
+              </div>
+            )
+          },
+          {
+            key: 'actions',
+            label: 'Acciones',
+            render: (row) => (canManage ? <button className="btn-secondary py-1.5" onClick={() => { setEditing(row); setForm(row); setOpen(true); }}>Editar</button> : '—')
+          }
         ]}
         rows={rows}
         loading={isLoading}
       />
 
       <Modal open={open} onClose={() => setOpen(false)} title={editing ? 'Editar categoría' : 'Nueva categoría'}>
-        <form className="space-y-3" onSubmit={save}>
-          <input placeholder="Nombre" value={form.name} onChange={(e) => setForm((v) => ({ ...v, name: e.target.value }))} />
-          <textarea placeholder="Descripción" value={form.description || ''} onChange={(e) => setForm((v) => ({ ...v, description: e.target.value }))} />
-          <ToggleSwitch
-            checked={form.isActive}
-            onChange={(value) => setForm((v) => ({ ...v, isActive: value }))}
-            label={form.isActive ? 'Categoría activa' : 'Categoría inactiva'}
-          />
-          <button className="btn-primary" disabled={isSaving}>{isSaving ? 'Guardando...' : 'Guardar'}</button>
+        <form className="space-y-4" onSubmit={save}>
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold uppercase tracking-[0.08em] text-[#6f6384]" htmlFor="category-name">Nombre de la categoría</label>
+            <input
+              id="category-name"
+              placeholder="Ej. Tecnología"
+              value={form.name}
+              onChange={(e) => setForm((v) => ({ ...v, name: e.target.value }))}
+              required
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold uppercase tracking-[0.08em] text-[#6f6384]" htmlFor="category-description">Descripción</label>
+            <textarea
+              id="category-description"
+              rows={4}
+              placeholder="Describe el uso de esta categoría en el inventario"
+              value={form.description || ''}
+              onChange={(e) => setForm((v) => ({ ...v, description: e.target.value }))}
+            />
+          </div>
+          <button className="btn-primary w-full" disabled={isSaving}>{isSaving ? 'Guardando...' : 'Guardar categoría'}</button>
         </form>
       </Modal>
     </div>
