@@ -34,13 +34,18 @@ const loanService = {
   register: async (payload, actorUserId) => {
     const employee = await employeeRepository.findById(payload.employeeId);
     if (!employee) throw new createError.BadRequest('Empleado inválido');
+    const requestedByAsset = new Map();
+
+    for (const item of payload.items) {
+      requestedByAsset.set(item.assetId, (requestedByAsset.get(item.assetId) || 0) + item.quantity);
+    }
 
     return prisma.$transaction(async (tx) => {
-      for (const item of payload.items) {
-        const asset = await assetRepository.findByIdForUpdate(tx, item.assetId);
-        if (!asset) throw new createError.BadRequest(`Activo ${item.assetId} inexistente`);
-        if (asset.availableQuantity < item.quantity) {
-          throw new createError.BadRequest(`Stock insuficiente para ${asset.name}`);
+      for (const [assetId, requestedQuantity] of requestedByAsset.entries()) {
+        const asset = await assetRepository.findByIdForUpdate(tx, assetId);
+        if (!asset) throw new createError.BadRequest(`Activo ${assetId} inexistente`);
+        if (asset.availableQuantity < requestedQuantity) {
+          throw new createError.BadRequest(`No hay stock disponible suficiente para ${asset.name}`);
         }
       }
 
@@ -54,19 +59,23 @@ const loanService = {
         items: { create: payload.items.map((item) => ({ assetId: item.assetId, quantity: item.quantity, notes: item.notes })) }
       });
 
-      for (const item of payload.items) {
-        const asset = await assetRepository.findByIdForUpdate(tx, item.assetId);
-        const nextAvailable = asset.availableQuantity - item.quantity;
-
-        await assetRepository.updateTx(tx, item.assetId, { availableQuantity: nextAvailable });
+      for (const [assetId, requestedQuantity] of requestedByAsset.entries()) {
+        const updateResult = await assetRepository.decrementAvailableTx(tx, assetId, requestedQuantity);
+        if (updateResult.count === 0) {
+          const conflictedAsset = await assetRepository.findByIdForUpdate(tx, assetId);
+          const assetName = conflictedAsset?.name || `#${assetId}`;
+          throw new createError.BadRequest(`No hay stock disponible suficiente para ${assetName}`);
+        }
+        const asset = await assetRepository.findByIdForUpdate(tx, assetId);
+        const nextAvailable = asset.availableQuantity;
 
         await movementRepository.createTx(tx, {
-          assetId: item.assetId,
+          assetId,
           performedByUserId: actorUserId,
           employeeId: payload.employeeId,
           loanId: loan.id,
           movementType: 'LOAN_OUT',
-          quantityDelta: -item.quantity,
+          quantityDelta: -requestedQuantity,
           resultingStock: nextAvailable,
           reason: `Préstamo #${loan.id}`
         });

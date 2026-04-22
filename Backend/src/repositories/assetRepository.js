@@ -8,6 +8,16 @@ const assetRepository = {
   count: (where = {}) => prisma.asset.count({ where }),
   findById: (id) => prisma.asset.findUnique({ where: { id }, include: includeCategory }),
   findByIdForUpdate: (tx, id) => tx.asset.findUnique({ where: { id } }),
+  decrementAvailableTx: (tx, id, quantity) =>
+    tx.asset.updateMany({
+      where: {
+        id,
+        availableQuantity: { gte: quantity }
+      },
+      data: {
+        availableQuantity: { decrement: quantity }
+      }
+    }),
   update: (id, data) => prisma.asset.update({ where: { id }, data, include: includeCategory }),
   updateTx: (tx, id, data) => tx.asset.update({ where: { id }, data })
 };

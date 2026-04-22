@@ -23,9 +23,23 @@ export default function LoanCreatePage() {
   }, []);
 
   const setItem = (index, patch) => setForm((prev) => ({ ...prev, items: prev.items.map((item, idx) => (idx === index ? { ...item, ...patch } : item)) }));
+  const findAsset = (assetId) => assets.find((asset) => asset.id === Number(assetId));
+  const availableForItem = (item) => findAsset(item.assetId)?.availableQuantity || 0;
 
   const submit = async (event) => {
     event.preventDefault();
+    for (const item of form.items) {
+      const available = availableForItem(item);
+      if (!item.assetId) {
+        push('Debes seleccionar un activo para cada ítem', 'error');
+        return;
+      }
+      if (Number(item.quantity) > available) {
+        const selectedAsset = findAsset(item.assetId);
+        push(`Stock insuficiente para ${selectedAsset?.name || 'el activo seleccionado'}`, 'error');
+        return;
+      }
+    }
     try {
       await LoanApi.create({
         employeeId: Number(form.employeeId),
@@ -60,7 +74,7 @@ export default function LoanCreatePage() {
                 );
               })}
             </select>
-            <input type="number" min="1" value={item.quantity} onChange={(e) => setItem(idx, { quantity: e.target.value })} />
+            <input type="number" min="1" max={Math.max(availableForItem(item), 1)} value={item.quantity} onChange={(e) => setItem(idx, { quantity: e.target.value })} />
             <input placeholder="Notas" value={item.notes} onChange={(e) => setItem(idx, { notes: e.target.value })} />
           </div>
         ))}
