@@ -3,7 +3,11 @@ const { prisma } = require('../prisma/client');
 const includeReturnDetail = {
   employee: true,
   receivedByUser: { select: { id: true, firstName: true, lastName: true, email: true } },
-  loan: true,
+  loan: {
+    include: {
+      deliveredByUser: { select: { id: true, firstName: true, lastName: true, email: true } }
+    }
+  },
   items: { include: { asset: true, loanItem: true } }
 };
 

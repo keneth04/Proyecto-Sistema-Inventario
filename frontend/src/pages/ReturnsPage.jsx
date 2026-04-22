@@ -10,26 +10,34 @@ const DEFAULT_CONDITION = 'GOOD';
 
 export default function ReturnsPage() {
   const [activeLoans, setActiveLoans] = useState([]);
+  const [returnsHistory, setReturnsHistory] = useState([]);
   const [selectedLoanId, setSelectedLoanId] = useState(null);
   const [form, setForm] = useState({ itemCondition: DEFAULT_CONDITION, observations: '', returnDate: '' });
   const [loading, setLoading] = useState(true);
+  const [historyLoading, setHistoryLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [filters, setFilters] = useState({ query: '', employee: '', asset: '', loanDate: '' });
+  const [historyFilters, setHistoryFilters] = useState({ query: '', status: 'ALL', returnDate: '' });
   const { push } = useToast();
 
   useEffect(() => {
-    const loadActiveLoans = async () => {
+    const loadData = async () => {
       try {
-        const { data } = await LoanApi.list({ page: 1, pageSize: 100 });
-        setActiveLoans(data.body.items.filter((loan) => loan.status !== 'CLOSED'));
+        const [loanResponse, returnResponse] = await Promise.all([
+          LoanApi.list({ page: 1, pageSize: 100 }),
+          ReturnApi.list({ page: 1, pageSize: 200 })
+        ]);
+        setActiveLoans(loanResponse.data.body.items.filter((loan) => loan.status !== 'CLOSED'));
+        setReturnsHistory(returnResponse.data.body.items || []);
       } catch (error) {
         push(getErrorMessage(error), 'error');
       } finally {
         setLoading(false);
+        setHistoryLoading(false);
       }
     };
 
-    loadActiveLoans();
+    loadData();
   }, [push]);
 
   const employeeOptions = useMemo(() => {
@@ -94,14 +102,20 @@ export default function ReturnsPage() {
 
   const reloadActiveLoans = async () => {
     setLoading(true);
+    setHistoryLoading(true);
     try {
-      const { data } = await LoanApi.list({ page: 1, pageSize: 100 });
-      setActiveLoans(data.body.items.filter((loan) => loan.status !== 'CLOSED'));
+      const [loanResponse, returnResponse] = await Promise.all([
+        LoanApi.list({ page: 1, pageSize: 100 }),
+        ReturnApi.list({ page: 1, pageSize: 200 })
+      ]);
+      setActiveLoans(loanResponse.data.body.items.filter((loan) => loan.status !== 'CLOSED'));
+      setReturnsHistory(returnResponse.data.body.items || []);
       setSelectedLoanId(null);
     } catch (error) {
       push(getErrorMessage(error), 'error');
     } finally {
       setLoading(false);
+      setHistoryLoading(false);
     }
   };
 
@@ -144,6 +158,38 @@ export default function ReturnsPage() {
     }
   };
 
+  const statusLabel = (status) => {
+    if (status === 'CLOSED') return 'Devuelto completo';
+    if (status === 'PARTIALLY_RETURNED') return 'Devuelto parcial';
+    return 'Registrado';
+  };
+
+  const historyRows = useMemo(() => {
+    const normalizedQuery = historyFilters.query.trim().toLowerCase();
+
+    return returnsHistory.filter((record) => {
+      const deliveredByName = fullName(record.loan?.deliveredByUser);
+      const employeeName = fullName(record.employee);
+      const assetNames = (record.items || []).map((item) => item.asset?.name || '').join(' ');
+      const conditionText = (record.items || []).map((item) => item.itemCondition || '').join(' ');
+      const returnDate = record.returnDate ? new Date(record.returnDate).toISOString().slice(0, 10) : '';
+
+      const matchesQuery =
+        !normalizedQuery ||
+        String(record.id).includes(normalizedQuery) ||
+        deliveredByName.toLowerCase().includes(normalizedQuery) ||
+        employeeName.toLowerCase().includes(normalizedQuery) ||
+        assetNames.toLowerCase().includes(normalizedQuery) ||
+        conditionText.toLowerCase().includes(normalizedQuery) ||
+        (record.observations || '').toLowerCase().includes(normalizedQuery);
+
+      const matchesStatus = historyFilters.status === 'ALL' || record.loan?.status === historyFilters.status;
+      const matchesReturnDate = !historyFilters.returnDate || returnDate === historyFilters.returnDate;
+
+      return matchesQuery && matchesStatus && matchesReturnDate;
+    });
+  }, [historyFilters, returnsHistory]);
+
 
   return (
     <div className="space-y-4">
@@ -151,7 +197,7 @@ export default function ReturnsPage() {
         title="Devoluciones"
         subtitle="Consulta préstamos activos, aplica filtros y registra devoluciones sin cambiar de pantalla."
       />
-       <section className="card space-y-3">
+      <section className="card space-y-3">
         <p className="section-subtitle">Filtro rápido</p>
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           <input
@@ -263,6 +309,60 @@ export default function ReturnsPage() {
           {submitting ? 'Registrando...' : 'Registrar devolución'}
         </button>
       </form>
+
+      <section className="card space-y-3">
+        <p className="section-subtitle">Historial de devoluciones</p>
+        <div className="grid gap-3 md:grid-cols-3">
+          <input
+            placeholder="Buscar por responsable, empleado, activo u observación"
+            value={historyFilters.query}
+            onChange={(e) => setHistoryFilters((prev) => ({ ...prev, query: e.target.value }))}
+          />
+          <select
+            value={historyFilters.status}
+            onChange={(e) => setHistoryFilters((prev) => ({ ...prev, status: e.target.value }))}
+          >
+            <option value="ALL">Todos los estados</option>
+            <option value="CLOSED">Devuelto completo</option>
+            <option value="PARTIALLY_RETURNED">Devuelto parcial</option>
+            <option value="OPEN">Préstamo abierto</option>
+            <option value="CANCELLED">Préstamo cancelado</option>
+          </select>
+          <input
+            type="date"
+            value={historyFilters.returnDate}
+            onChange={(e) => setHistoryFilters((prev) => ({ ...prev, returnDate: e.target.value }))}
+          />
+        </div>
+
+        <Table
+          loading={historyLoading}
+          columns={[
+            { key: 'deliveredBy', label: 'Quién prestó', render: (record) => fullName(record.loan?.deliveredByUser) },
+            { key: 'employee', label: 'A quién se prestó', render: (record) => fullName(record.employee) },
+            {
+              key: 'assets',
+              label: 'Qué se prestó',
+              render: (record) =>
+                (record.items || [])
+                  .map((item) => `${item.asset?.name || `Activo #${item.assetId}`} (${item.quantity})`)
+                  .join(', ')
+            },
+            {
+              key: 'quantity',
+              label: 'Cantidad',
+              render: (record) => (record.items || []).reduce((total, item) => total + (item.quantity || 0), 0)
+            },
+            { key: 'loanDate', label: 'Fecha préstamo', render: (record) => formatDateTime(record.loan?.loanDate) },
+            { key: 'returnDate', label: 'Fecha devolución', render: (record) => formatDateTime(record.returnDate) },
+            { key: 'status', label: 'Estado devolución', render: (record) => statusLabel(record.loan?.status) },
+            { key: 'observations', label: 'Observaciones', render: (record) => record.observations || 'Sin observaciones' }
+          ]}
+          rows={historyRows}
+          emptyLabel="No hay devoluciones registradas con los filtros aplicados"
+        />
+      </section>
+
     </div>
   );
 }
