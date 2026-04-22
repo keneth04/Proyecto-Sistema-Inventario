@@ -7,6 +7,19 @@ import { getErrorMessage } from '../utils/format';
 
 const emptyForm = { categoryId: '', assetCode: '', name: '', brand: '', model: '', serialNumber: '', description: '', totalQuantity: 1, minimumStock: 0, status: 'ACTIVE' };
 
+const normalizeAssetForForm = (asset) => ({
+  categoryId: String(asset?.categoryId ?? ''),
+  assetCode: asset?.assetCode ?? '',
+  name: asset?.name ?? '',
+  brand: asset?.brand ?? '',
+  model: asset?.model ?? '',
+  serialNumber: asset?.serialNumber ?? '',
+  description: asset?.description ?? '',
+  totalQuantity: asset?.totalQuantity ?? 1,
+  minimumStock: asset?.minimumStock ?? 0,
+  status: asset?.status ?? 'ACTIVE'
+});
+
 export default function AssetFormPage() {
   const { id } = useParams();
   const isEdit = Boolean(id);
@@ -21,7 +34,7 @@ export default function AssetFormPage() {
       setCategories(categoryData.body.items);
       if (isEdit) {
         const { data } = await AssetApi.findById(id);
-        setForm({ ...data.body, categoryId: data.body.categoryId });
+        setForm(normalizeAssetForForm(data.body));
       }
     };
     load();
@@ -31,25 +44,26 @@ export default function AssetFormPage() {
 
   const submit = async (event) => {
     event.preventDefault();
-    const payload = {
+    const basePayload = {
       categoryId: Number(form.categoryId),
-      assetCode: form.assetCode,
       name: form.name,
       brand: form.brand || undefined,
       model: form.model || undefined,
       serialNumber: form.serialNumber || undefined,
       description: form.description || undefined,
-      totalQuantity: Number(form.totalQuantity),
       minimumStock: Number(form.minimumStock),
       status: form.status
     };
 
     try {
       if (isEdit) {
-        delete payload.totalQuantity;
-        await AssetApi.update(id, payload);
+        await AssetApi.update(id, basePayload);
       } else {
-        await AssetApi.create(payload);
+        await AssetApi.create({
+          ...basePayload,
+          assetCode: form.assetCode,
+          totalQuantity: Number(form.totalQuantity)
+        });
       }
       push('Activo guardado correctamente', 'info');
       navigate('/assets');

@@ -54,16 +54,6 @@ const toOperationalStatus = (asset) => {
   return 'AVAILABLE';
 };
 
-const normalizeForm = (asset) => ({
-  name: asset?.name || '',
-  brand: asset?.brand || '',
-  serialNumber: asset?.serialNumber || '',
-  status: asset?.status || 'ACTIVE',
-  description: asset?.description || '',
-  categoryId: String(asset?.categoryId || ''),
-  totalQuantity: asset?.totalQuantity || 1,
-  minimumStock: asset?.minimumStock || 0
-});
 
 export default function AssetsPage() {
   const [rows, setRows] = useState([]);
@@ -76,7 +66,6 @@ export default function AssetsPage() {
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [open, setOpen] = useState(false);
-  const [editingAsset, setEditingAsset] = useState(null);
   const [form, setForm] = useState(initialForm);
   const { user } = useAuth();
   const { push } = useToast();
@@ -130,14 +119,7 @@ export default function AssetsPage() {
       push('Debes crear al menos una categoría antes de registrar activos', 'error');
       return;
     }
-    setEditingAsset(null);
     setForm({ ...initialForm, categoryId: String(categories[0].id) });
-    setOpen(true);
-  };
-
-  const openEdit = (asset) => {
-    setEditingAsset(asset);
-    setForm(normalizeForm(asset));
     setOpen(true);
   };
 
@@ -156,20 +138,14 @@ export default function AssetsPage() {
     };
 
     try {
-      if (editingAsset) {
-        await AssetApi.update(editingAsset.id, payload);
-        push('Activo actualizado correctamente', 'success');
-      } else {
-        await AssetApi.create({
-          ...payload,
-          assetCode: `AST-${Date.now()}`,
-          totalQuantity: Number(form.totalQuantity)
-        });
-        push('Activo creado correctamente', 'success');
-      }
+      await AssetApi.create({
+        ...payload,
+        assetCode: `AST-${Date.now()}`,
+        totalQuantity: Number(form.totalQuantity)
+      });
+      push('Activo creado correctamente', 'success');
       await load({ nextPage: 1 });
       setOpen(false);
-      setEditingAsset(null);
       setForm(initialForm);
     } catch (error) {
       push(getErrorMessage(error), 'error');
@@ -250,8 +226,7 @@ export default function AssetsPage() {
             label: 'Acciones',
             render: (row) => (
               <div className="flex gap-2">
-                {canManage ? <button className="btn-secondary py-1.5" onClick={() => openEdit(row)}>Editar rápido</button> : null}
-                {canManage ? <Link className="btn-secondary py-1.5" to={`/assets/${row.id}/edit`}>Editar completo</Link> : null}
+                {canManage ? <Link className="btn-secondary py-1.5" to={`/assets/${row.id}/edit`}>Editar</Link> : null}
               </div>
             )
           }
@@ -267,7 +242,7 @@ export default function AssetsPage() {
         </div>
       </div>
 
-      <Modal open={open} onClose={() => setOpen(false)} title={editingAsset ? 'Editar activo' : 'Nuevo activo'}>
+      <Modal open={open} onClose={() => setOpen(false)} title="Nuevo activo">
         <form className="grid gap-3" onSubmit={submit}>
           <input
             placeholder="Nombre del activo"
@@ -291,16 +266,14 @@ export default function AssetsPage() {
               <option key={category.id} value={String(category.id)}>{category.name}</option>
             ))}
           </select>
-          {!editingAsset ? (
-            <input
-              type="number"
-              min={1}
-              placeholder="Cantidad total"
-              value={form.totalQuantity}
-              onChange={(event) => setForm((current) => ({ ...current, totalQuantity: event.target.value }))}
-              required
-            />
-          ) : null}
+          <input
+            type="number"
+            min={1}
+            placeholder="Cantidad total"
+            value={form.totalQuantity}
+            onChange={(event) => setForm((current) => ({ ...current, totalQuantity: event.target.value }))}
+            required
+          />
           <input
             type="number"
             min={0}
