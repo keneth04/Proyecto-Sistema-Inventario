@@ -49,7 +49,17 @@ export default function LoanCreatePage() {
         <div className="grid gap-3 md:grid-cols-2"><input type="datetime-local" value={form.loanDate} onChange={(e) => setForm((v) => ({ ...v, loanDate: e.target.value }))} /><input type="datetime-local" value={form.expectedReturnDate} onChange={(e) => setForm((v) => ({ ...v, expectedReturnDate: e.target.value }))} /></div>
         {form.items.map((item, idx) => (
           <div key={idx} className="grid gap-2 md:grid-cols-3">
-            <select value={item.assetId} onChange={(e) => setItem(idx, { assetId: e.target.value })}><option value="">Activo</option>{assets.map((a) => <option key={a.id} value={a.id}>{a.assetCode} - {a.name} ({a.availableQuantity})</option>)}</select>
+            <select value={item.assetId} onChange={(e) => setItem(idx, { assetId: e.target.value })}>
+              <option value="">Activo</option>
+              {assets.map((a) => {
+                const loanedQuantity = Math.max((a.totalQuantity || 0) - (a.availableQuantity || 0), 0);
+                return (
+                  <option key={a.id} value={a.id}>
+                    {a.assetCode} - {a.name} (Disp: {a.availableQuantity} | Prest: {loanedQuantity} | Total: {a.totalQuantity})
+                  </option>
+                );
+              })}
+            </select>
             <input type="number" min="1" value={item.quantity} onChange={(e) => setItem(idx, { quantity: e.target.value })} />
             <input placeholder="Notas" value={item.notes} onChange={(e) => setItem(idx, { notes: e.target.value })} />
           </div>

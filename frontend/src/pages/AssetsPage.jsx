@@ -39,7 +39,9 @@ const initialForm = {
   serialNumber: '',
   status: 'ACTIVE',
   description: '',
-  categoryId: ''
+  categoryId: '',
+  totalQuantity: 1,
+  minimumStock: 0
 };
 
 const PAGE_SIZE = 20;
@@ -58,7 +60,9 @@ const normalizeForm = (asset) => ({
   serialNumber: asset?.serialNumber || '',
   status: asset?.status || 'ACTIVE',
   description: asset?.description || '',
-  categoryId: String(asset?.categoryId || '')
+  categoryId: String(asset?.categoryId || ''),
+  totalQuantity: asset?.totalQuantity || 1,
+  minimumStock: asset?.minimumStock || 0
 });
 
 export default function AssetsPage() {
@@ -147,7 +151,8 @@ export default function AssetsPage() {
       serialNumber: form.serialNumber.trim() || undefined,
       status: form.status,
       description: form.description.trim() || undefined,
-      categoryId: Number(form.categoryId)
+      categoryId: Number(form.categoryId),
+      minimumStock: Number(form.minimumStock)
     };
 
     try {
@@ -158,8 +163,7 @@ export default function AssetsPage() {
         await AssetApi.create({
           ...payload,
           assetCode: `AST-${Date.now()}`,
-          totalQuantity: 1,
-          minimumStock: 0
+          totalQuantity: Number(form.totalQuantity)
         });
         push('Activo creado correctamente', 'success');
       }
@@ -222,6 +226,21 @@ export default function AssetsPage() {
             }
           },
           {
+            key: 'totalQuantity',
+            label: 'Total',
+            render: (row) => row.totalQuantity ?? 0
+          },
+          {
+            key: 'loanedQuantity',
+            label: 'Prestados',
+            render: (row) => Math.max((row.totalQuantity || 0) - (row.availableQuantity || 0), 0)
+          },
+          {
+            key: 'availableQuantity',
+            label: 'Disponibles',
+            render: (row) => row.availableQuantity ?? 0
+          },
+          {
             key: 'description',
             label: 'Descripción',
             render: (row) => (row.description ? <span className="max-w-xs whitespace-normal break-words">{row.description}</span> : '—')
@@ -272,6 +291,24 @@ export default function AssetsPage() {
               <option key={category.id} value={String(category.id)}>{category.name}</option>
             ))}
           </select>
+          {!editingAsset ? (
+            <input
+              type="number"
+              min={1}
+              placeholder="Cantidad total"
+              value={form.totalQuantity}
+              onChange={(event) => setForm((current) => ({ ...current, totalQuantity: event.target.value }))}
+              required
+            />
+          ) : null}
+          <input
+            type="number"
+            min={0}
+            placeholder="Stock mínimo"
+            value={form.minimumStock}
+            onChange={(event) => setForm((current) => ({ ...current, minimumStock: event.target.value }))}
+            required
+          />
           <select value={form.status} onChange={(event) => setForm((current) => ({ ...current, status: event.target.value }))}>
             <option value="ACTIVE">Disponible</option>
             <option value="MAINTENANCE">Mantenimiento</option>

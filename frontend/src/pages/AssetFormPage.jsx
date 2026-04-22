@@ -5,7 +5,7 @@ import PageHeader from '../components/ui/PageHeader';
 import { useToast } from '../components/Toast';
 import { getErrorMessage } from '../utils/format';
 
-const emptyForm = { categoryId: '', assetCode: '', name: '', brand: '', model: '', serialNumber: '', description: '', totalQuantity: 0, minimumStock: 0, status: 'ACTIVE' };
+const emptyForm = { categoryId: '', assetCode: '', name: '', brand: '', model: '', serialNumber: '', description: '', totalQuantity: 1, minimumStock: 0, status: 'ACTIVE' };
 
 export default function AssetFormPage() {
   const { id } = useParams();
@@ -71,8 +71,8 @@ export default function AssetFormPage() {
         <input placeholder="Marca" value={form.brand || ''} onChange={(e) => setForm((v) => ({ ...v, brand: e.target.value }))} />
         <input placeholder="Modelo" value={form.model || ''} onChange={(e) => setForm((v) => ({ ...v, model: e.target.value }))} />
         <input placeholder="Serial" value={form.serialNumber || ''} onChange={(e) => setForm((v) => ({ ...v, serialNumber: e.target.value }))} />
-        {!isEdit ? <input type="number" placeholder="Cantidad total" value={form.totalQuantity} onChange={(e) => setForm((v) => ({ ...v, totalQuantity: e.target.value }))} /> : null}
-        <input type="number" placeholder="Stock mínimo" value={form.minimumStock} onChange={(e) => setForm((v) => ({ ...v, minimumStock: e.target.value }))} />
+        {!isEdit ? <input type="number" min="1" placeholder="Cantidad total" value={form.totalQuantity} onChange={(e) => setForm((v) => ({ ...v, totalQuantity: e.target.value }))} /> : null}
+        <input type="number" min="0" placeholder="Stock mínimo" value={form.minimumStock} onChange={(e) => setForm((v) => ({ ...v, minimumStock: e.target.value }))} />
         <select value={form.status} onChange={(e) => setForm((v) => ({ ...v, status: e.target.value }))}>
           <option value="ACTIVE">Activo</option><option value="INACTIVE">Inactivo</option><option value="MAINTENANCE">Mantenimiento</option><option value="RETIRED">Retirado</option>
         </select>

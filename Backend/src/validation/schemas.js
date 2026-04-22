@@ -191,7 +191,7 @@ const userSchemas = {
   create: (body) => {
     assertObject(body, 'body');
     allowOnly(body, ['categoryId', 'assetCode', 'name', 'brand', 'model', 'serialNumber', 'description', 'totalQuantity', 'minimumStock', 'status'], 'body');
-    const totalQuantity = asInt({ value: body.totalQuantity, field: 'totalQuantity', source: 'body', min: 0 });
+    const totalQuantity = asInt({ value: body.totalQuantity, field: 'totalQuantity', source: 'body', min: 1 });
     return {
       categoryId: asInt({ value: body.categoryId, field: 'categoryId', source: 'body', min: 1 }),
       assetCode: asString({ value: body.assetCode, field: 'assetCode', source: 'body', max: 50 }),
