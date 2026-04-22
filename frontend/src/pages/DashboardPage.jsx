@@ -18,6 +18,11 @@ const movementTypeLabels = {
   RETIREMENT: 'Retiro'
 };
 
+const formatActor = (user) => {
+  const name = [user?.firstName, user?.lastName].filter(Boolean).join(' ').trim();
+  return name || user?.email || 'Sistema';
+};
+
 export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [dashboard, setDashboard] = useState(null);
@@ -47,17 +52,17 @@ export default function DashboardPage() {
     <div className="page-content">
       <PageHeader
         title="Dashboard ejecutivo"
-        subtitle="Visión operativa de activos, préstamos activos y movimientos recientes."
+        subtitle="Métricas reales de inventario y trazabilidad de las últimas operaciones."
       />
       <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <StatCard label="Activos totales" value={kpis.totalAssets} />
+        <StatCard label="Stock total" value={kpis.totalStock} />
         <StatCard label="Disponibles" value={kpis.available} />
         <StatCard label="Prestados" value={kpis.loaned} />
         <StatCard label="En mantenimiento" value={kpis.maintenance} />
-        <StatCard label="Devoluciones pendientes" value={kpis.pendingReturns} />
-        <StatCard label="Empleados con préstamos" value={kpis.employeesWithActiveLoans} />
+        <StatCard label="Últimas operaciones" value={latestMovements.length} />
       </div>
-        <h3 className="mb-2 text-lg font-bold">Últimos movimientos</h3>
+      <h3 className="mb-2 text-lg font-bold">Últimos movimientos</h3>
       <Table
         columns={[
           {
@@ -79,6 +84,11 @@ export default function DashboardPage() {
             key: 'employee',
             label: 'Empleado',
             render: (row) => fullName(row.employee)
+          },
+          {
+            key: 'performedByUser',
+            label: 'Ejecutado por',
+            render: (row) => formatActor(row.performedByUser)
           },
           {
             key: 'quantityDelta',

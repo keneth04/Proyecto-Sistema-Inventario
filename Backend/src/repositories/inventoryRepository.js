@@ -41,7 +41,8 @@ const inventoryRepository = {
       orderBy: { createdAt: 'desc' },
       include: {
         asset: { select: { id: true, name: true, assetCode: true } },
-        employee: { select: { id: true, firstName: true, lastName: true } }
+        employee: { select: { id: true, firstName: true, lastName: true } },
+        performedByUser: { select: { id: true, firstName: true, lastName: true, email: true } }
       }
     })
 };

@@ -6,24 +6,21 @@ const inventoryService = {
   loanedAssets: async () => {
     const assets = await inventoryRepository.allAssets();
     return assets.filter((asset) => asset.availableQuantity < asset.totalQuantity);
-    },
+  },
   executiveDashboard: async () => {
-    const [summary, byStatus, pendingReturns, employeesWithActiveLoans, latestMovements] = await Promise.all([
+    const [summary, byStatus, latestMovements] = await Promise.all([
       inventoryRepository.stockSummary(),
       inventoryRepository.assetsByStatus(),
-      inventoryRepository.activeLoansCount(),
-      inventoryRepository.employeesWithActiveLoansCount(),
       inventoryRepository.recentMovements(8)
     ]);
 
     return {
       kpis: {
         totalAssets: summary.totalAssets,
+        totalStock: summary.totalAssetsQuantity,
         available: summary.availableAssetsQuantity,
         loaned: summary.loanedAssetsQuantity,
-        maintenance: byStatus.maintenanceAssets,
-        pendingReturns,
-        employeesWithActiveLoans
+        maintenance: byStatus.maintenanceAssets
       },
       latestMovements
     };
