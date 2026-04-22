@@ -4,31 +4,31 @@
 
 @layer base {
   body {
-    @apply bg-[#f3f1f8] text-[#1f2937] antialiased;
+    @apply bg-[#efedf5] text-[#1f2937] antialiased;
   }
 
   input,
   select,
   textarea {
-    @apply rounded-xl border border-[#ddd4ea] bg-white px-3 py-2.5 text-sm text-[#1f2937] placeholder:text-[#9ca3af] shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition duration-200 focus:border-[#765492] focus:outline-none focus:ring-4 focus:ring-[#76549233];
+    @apply rounded-xl border border-[#ded6ea] bg-white px-3 py-2.5 text-sm text-[#231d33] placeholder:text-[#9ba3b3] shadow-[0_1px_2px_rgba(15,23,42,0.03)] transition duration-200 focus:border-[#775599] focus:outline-none focus:ring-4 focus:ring-[#7755992b];
   }
 }
 
 @layer components {
   .card {
-    @apply rounded-2xl border border-[#e6deef] bg-white p-5 shadow-[0_8px_28px_rgba(118,84,146,0.08)];
+    @apply rounded-2xl border border-[#e8e1ef] bg-white p-5 shadow-[0_12px_32px_rgba(82,56,108,0.10)];
   }
 
   .btn-primary {
-    @apply rounded-xl bg-[#765492] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition duration-200 hover:bg-[#694983] focus:outline-none focus:ring-4 focus:ring-[#76549240] disabled:cursor-not-allowed disabled:opacity-70;
+    @apply rounded-xl bg-[#775599] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition duration-200 hover:bg-[#6b4c8a] focus:outline-none focus:ring-4 focus:ring-[#77559940] disabled:cursor-not-allowed disabled:opacity-70;
   }
 
   .btn-secondary {
-    @apply rounded-xl border border-[#d8d1e5] bg-white px-4 py-2.5 text-sm font-semibold text-[#433257] transition duration-200 hover:border-[#c8bddb] hover:bg-[#f8f5fc] focus:outline-none focus:ring-4 focus:ring-[#76549226];
+    @apply rounded-xl border border-[#d3c7e2] bg-white px-4 py-2.5 text-sm font-semibold text-[#433257] transition duration-200 hover:border-[#c8b8dc] hover:bg-[#f8f4fc] focus:outline-none focus:ring-4 focus:ring-[#76549226];
   }
 
   .btn-danger {
-    @apply rounded-xl bg-[#e12d2d] px-4 py-2.5 text-sm font-semibold text-white transition duration-200 hover:bg-[#ca2525] focus:outline-none focus:ring-4 focus:ring-[#e12d2d33] disabled:cursor-not-allowed disabled:opacity-70;
+    @apply rounded-xl bg-[#ef233c] px-4 py-2.5 text-sm font-semibold text-white transition duration-200 hover:bg-[#dd1b34] focus:outline-none focus:ring-4 focus:ring-[#ef233c33] disabled:cursor-not-allowed disabled:opacity-70;
   }
 
   .panel-title {
@@ -36,6 +36,37 @@
   }
 
   .section-subtitle {
-    @apply mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#765492]/80;
+    @apply mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#775599]/80;
+  }
+
+  .toggle-switch {
+    @apply relative inline-flex h-8 w-[64px] items-center rounded-full border border-transparent bg-[#11b993] p-1 transition-colors duration-200 focus:outline-none focus:ring-4 focus:ring-[#11b99333];
+  }
+
+  .toggle-switch--off {
+    @apply bg-[#cfd5e2] focus:ring-[#9aa3b333];
+  }
+
+  .toggle-switch__thumb {
+    @apply inline-block h-6 w-6 transform rounded-full bg-white shadow-[0_1px_4px_rgba(15,23,42,0.25)] transition-transform duration-200;
+  }
+
+  .toggle-switch__thumb--on {
+    @apply translate-x-8;
+  }
+
+  .page-transition {
+    animation: page-fade 220ms ease-out;
+  }
+}
+
+@keyframes page-fade {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

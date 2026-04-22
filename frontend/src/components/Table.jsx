@@ -1,13 +1,13 @@
 export default function Table({ columns, rows }) {
   const mobileTitleKey = columns[0]?.key;
   return (
-    <div className="rounded-2xl border border-[#e6deef] bg-white shadow-[0_8px_26px_rgba(118,84,146,0.08)]">
+    <div className="rounded-2xl border border-[#e3dcea] bg-white shadow-[0_8px_24px_rgba(90,64,118,0.10)]">
       <div className="hidden overflow-x-auto md:block">
         <table className="min-w-full text-sm">
-          <thead className="bg-[#f8f5fc] text-left">
+          <thead className="bg-[#f0edf5] text-left">
             <tr>
               {columns.map((col) => (
-                <th key={col.key} className="px-4 py-3 text-xs font-bold uppercase tracking-[0.1em] text-[#5a4f6d]">{col.label}</th>
+                <th key={col.key} className="px-4 py-3 text-xs font-bold uppercase tracking-[0.14em] text-[#4f4460]">{col.label}</th>
               ))}
             </tr>
           </thead>
@@ -20,7 +20,7 @@ export default function Table({ columns, rows }) {
               </tr>
             )}
             {rows.map((row, idx) => (
-              <tr key={row.id || idx} className="border-t border-[#efe8f6] transition hover:bg-[#fdfbff]">
+              <tr key={row.id || idx} className="border-t border-[#ece5f4] transition hover:bg-[#faf8fe]">
                 {columns.map((col) => (
                   <td key={col.key} className="px-4 py-3.5 align-top text-[#2b2239]">{col.render ? col.render(row) : row[col.key]}</td>
                 ))}

@@ -7,5 +7,5 @@ export const ROLES = {
 export const ROLE_LABELS = {
   ADMIN: 'Administrador',
   INVENTORY_MANAGER: 'Gestor de inventario',
-  VIEWER: 'Solo lectura'
-}; 
+  VIEWER: 'Espectador'
+};

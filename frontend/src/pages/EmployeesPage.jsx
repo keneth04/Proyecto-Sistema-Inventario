@@ -8,6 +8,7 @@ import { useAuth } from '../auth/AuthContext';
 import { canManageInventory } from '../utils/permissions';
 import { useToast } from '../components/Toast';
 import { getErrorMessage } from '../utils/format';
+import ToggleSwitch from '../components/ui/ToggleSwitch';
 
 const initialForm = {
   employeeCode: '',
@@ -187,10 +188,13 @@ export default function EmployeesPage() {
             value={form.position}
             onChange={(e) => setForm((v) => ({ ...v, position: e.target.value }))}
           />
-          <select value={form.status} onChange={(e) => setForm((v) => ({ ...v, status: e.target.value }))}>
-            <option value="ACTIVE">Activo</option>
-            <option value="INACTIVE">Inactivo</option>
-          </select>
+          <div className="md:col-span-2">
+            <ToggleSwitch
+              checked={form.status === 'ACTIVE'}
+              onChange={(checked) => setForm((v) => ({ ...v, status: checked ? 'ACTIVE' : 'INACTIVE' }))}
+              label={form.status === 'ACTIVE' ? 'Empleado activo' : 'Empleado inactivo'}
+            />
+          </div>
           <button className="btn-primary md:col-span-2" disabled={isSaving}>{isSaving ? 'Guardando...' : 'Guardar empleado'}</button>
         </form>
       </Modal>

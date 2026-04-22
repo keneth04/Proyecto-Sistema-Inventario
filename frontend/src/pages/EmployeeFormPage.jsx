@@ -4,6 +4,7 @@ import { EmployeeApi } from '../api/endpoints';
 import PageHeader from '../components/ui/PageHeader';
 import { useToast } from '../components/Toast';
 import { getErrorMessage } from '../utils/format';
+import ToggleSwitch from '../components/ui/ToggleSwitch';
 
 const emptyForm = {
   employeeCode: '',
@@ -78,7 +79,13 @@ export default function EmployeeFormPage() {
         <input placeholder="Teléfono" value={form.phone || ''} onChange={(e) => setForm((v) => ({ ...v, phone: e.target.value }))} />
         <input placeholder="Área" value={form.department || ''} onChange={(e) => setForm((v) => ({ ...v, department: e.target.value }))} />
         <input placeholder="Cargo" value={form.position || ''} onChange={(e) => setForm((v) => ({ ...v, position: e.target.value }))} />
-        <select value={form.status} onChange={(e) => setForm((v) => ({ ...v, status: e.target.value }))}><option value="ACTIVE">Activo</option><option value="INACTIVE">Inactivo</option></select>
+        <div className="md:col-span-2">
+          <ToggleSwitch
+            checked={form.status === 'ACTIVE'}
+            onChange={(checked) => setForm((v) => ({ ...v, status: checked ? 'ACTIVE' : 'INACTIVE' }))}
+            label={form.status === 'ACTIVE' ? 'Empleado activo' : 'Empleado inactivo'}
+          />
+        </div>
         <button className="btn-primary md:col-span-2">Guardar</button>
       </form>
     </div>

@@ -7,6 +7,7 @@ import { useAuth } from '../auth/AuthContext';
 import { canManageInventory } from '../utils/permissions';
 import { useToast } from '../components/Toast';
 import { getErrorMessage } from '../utils/format';
+import ToggleSwitch from '../components/ui/ToggleSwitch';
 
 const initial = { name: '', description: '', isActive: true };
 
@@ -89,7 +90,11 @@ export default function CategoriesPage() {
         <form className="space-y-3" onSubmit={save}>
           <input placeholder="Nombre" value={form.name} onChange={(e) => setForm((v) => ({ ...v, name: e.target.value }))} />
           <textarea placeholder="Descripción" value={form.description || ''} onChange={(e) => setForm((v) => ({ ...v, description: e.target.value }))} />
-          <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.isActive} onChange={(e) => setForm((v) => ({ ...v, isActive: e.target.checked }))} /> Activa</label>
+          <ToggleSwitch
+            checked={form.isActive}
+            onChange={(value) => setForm((v) => ({ ...v, isActive: value }))}
+            label={form.isActive ? 'Categoría activa' : 'Categoría inactiva'}
+          />
           <button className="btn-primary" disabled={isSaving}>{isSaving ? 'Guardando...' : 'Guardar'}</button>
         </form>
       </Modal>
