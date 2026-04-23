@@ -17,10 +17,10 @@ const runValidator = (schema, payload, source) => {
     });
 
     if (error) {
-      const validationError = new createError.BadRequest(`Error de validación en ${source}`);
+      const validationError = new createError.BadRequest('Información inválida');
       validationError.details = (error.details || []).map((detail) => ({
         field: detail.path.join('.'),
-        message: detail.message,
+        message: 'Revisa los datos ingresados.',
         code: detail.type
       }));
       throw validationError;
@@ -29,7 +29,7 @@ const runValidator = (schema, payload, source) => {
     return value;
   }
 
-  throw new createError.InternalServerError(`Schema inválido para ${source}`);
+  throw new createError.InternalServerError(`Configuración inválida de validación para ${source}`);
 };
 
 const validateRequest = ({ body, query, params }) => (req, res, next) => {

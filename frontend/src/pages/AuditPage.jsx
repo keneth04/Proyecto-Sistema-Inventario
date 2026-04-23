@@ -106,7 +106,7 @@ export default function AuditPage() {
           { key: 'performedByUser', label: 'Usuario', render: (r) => formatActor(r) },
           { key: 'action', label: 'Acción', render: (r) => ACTION_LABELS[r.action] || r.action },
           { key: 'entityType', label: 'Entidad', render: (r) => ENTITY_LABELS[r.entityType] || r.entityType },
-          { key: 'entityId', label: 'ID entidad' },
+          { key: 'entityId', label: 'Código interno' },
           { key: 'summary', label: 'Detalle', render: (r) => <div className="space-y-1"><p>{r.summary}</p><p className="text-xs text-[#7a6f8e]">{formatMetadata(r.metadata)}</p></div> }
         ]}
         rows={rows}

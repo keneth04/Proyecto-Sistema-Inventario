@@ -2,9 +2,40 @@ const createError = require('http-errors');
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+const FIELD_LABELS = {
+  body: 'Formulario',
+  params: 'Ruta',
+  query: 'Consulta',
+  id: 'Código interno',
+  employeeId: 'Empleado',
+  categoryId: 'Categoría',
+  assetId: 'Activo',
+  loanId: 'Préstamo',
+  loanItemId: 'Ítem de préstamo'
+};
+
+const normalizeFieldLabel = (field = '') => {
+  const normalizedField = String(field || '').split('.').pop();
+  return FIELD_LABELS[normalizedField] || field;
+};
+
+const normalizeDetailMessage = (detailMessage = '') => {
+  if (!detailMessage) return 'Información inválida';
+  if (detailMessage.startsWith('Campo no permitido')) return 'Información no permitida';
+  if (detailMessage.startsWith('Debe ser >=')) return 'Valor fuera de rango';
+  return detailMessage;
+};
+
+
 const buildValidationError = (message, details = []) => {
-  const error = new createError.BadRequest(message);
-  error.details = details;
+  const isValidationMessage = typeof message === 'string' && message.includes('validación');
+  const normalizedMessage = isValidationMessage ? 'Información inválida' : message;
+  const error = new createError.BadRequest(normalizedMessage);
+  error.details = details.map((detail) => ({
+    ...detail,
+    field: normalizeFieldLabel(detail.field),
+    message: normalizeDetailMessage(detail.message)
+  }));
   return error;
 };
 
@@ -12,7 +43,7 @@ const isPlainObject = (value) => value && typeof value === 'object' && !Array.is
 
 const assertObject = (payload, source) => {
   if (!isPlainObject(payload)) {
-    throw buildValidationError(`Error de validación en ${source}`, [{ field: source, message: 'Debe ser un objeto', code: 'object.base' }]);
+    throw buildValidationError(`Error de validación en ${source}`, [{ field: source, message: 'Datos incompletos', code: 'object.base' }]);
   }
 };
 
@@ -26,7 +57,8 @@ const allowOnly = (payload, allowedKeys, source) => {
 
 const asString = ({ value, field, source, required = true, min = 1, max = 255 }) => {
   if ((value === undefined || value === null) && !required) return undefined;
-  if (typeof value !== 'string') throw buildValidationError(`Error de validación en ${source}`, [{ field, message: 'Debe ser texto', code: 'string.base' }]);
+  if (typeof value !== 'string') throw buildValidationError(`Error de validación en ${source}`, [{ field, message: 'Información inválida', code: 'string.base' }]);
+  
   
 
   const normalized = value.trim();
@@ -47,7 +79,7 @@ const asEmail = ({ value, field, source, required = true }) => {
 
   const asInt = ({ value, field, source, required = true, min = Number.MIN_SAFE_INTEGER }) => {
   if ((value === undefined || value === null) && !required) return undefined;
-  if (!Number.isInteger(value)) throw buildValidationError(`Error de validación en ${source}`, [{ field, message: 'Debe ser entero', code: 'number.base' }]);
+  if (!Number.isInteger(value)) throw buildValidationError(`Error de validación en ${source}`, [{ field, message: 'Información inválida', code: 'number.base' }]);
   if (value < min) throw buildValidationError(`Error de validación en ${source}`, [{ field, message: `Debe ser >= ${min}`, code: 'number.min' }]);
   return value;
 };
@@ -228,7 +260,7 @@ const loanSchemas = {
     assertObject(body, 'body');
     allowOnly(body, ['employeeId', 'loanDate', 'expectedReturnDate', 'observations', 'items'], 'body');
     if (!Array.isArray(body.items) || body.items.length === 0) {
-      throw buildValidationError('Error de validación en body', [{ field: 'items', message: 'Debe incluir al menos un item', code: 'array.min' }]);
+      throw buildValidationError('Error de validación en body', [{ field: 'items', message: 'Debe incluir al menos un elemento', code: 'array.min' }]);
     }
 
     return {
@@ -252,7 +284,7 @@ const returnSchemas = {
     assertObject(body, 'body');
     allowOnly(body, ['loanId', 'employeeId', 'returnDate', 'observations', 'items'], 'body');
     if (!Array.isArray(body.items) || body.items.length === 0) {
-      throw buildValidationError('Error de validación en body', [{ field: 'items', message: 'Debe incluir al menos un item', code: 'array.min' }]);
+      throw buildValidationError('Error de validación en body', [{ field: 'items', message: 'Debe incluir al menos un elemento', code: 'array.min' }]);
     }
     return {
       loanId: asInt({ value: body.loanId, field: 'loanId', source: 'body', min: 1 }),
