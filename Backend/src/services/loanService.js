@@ -43,9 +43,9 @@ const loanService = {
     return prisma.$transaction(async (tx) => {
       for (const [assetId, requestedQuantity] of requestedByAsset.entries()) {
         const asset = await assetRepository.findByIdForUpdate(tx, assetId);
-        if (!asset) throw new createError.BadRequest(`Activo ${assetId} inexistente`);
+        if (!asset) throw new createError.BadRequest('El activo seleccionado no está disponible');
         if (asset.availableQuantity < requestedQuantity) {
-          throw new createError.BadRequest(`No hay stock disponible suficiente para ${asset.name}`);
+          throw new createError.BadRequest(`No hay unidades disponibles suficientes para ${asset.name}`);
         }
       }
 
@@ -63,8 +63,8 @@ const loanService = {
         const updateResult = await assetRepository.decrementAvailableTx(tx, assetId, requestedQuantity);
         if (updateResult.count === 0) {
           const conflictedAsset = await assetRepository.findByIdForUpdate(tx, assetId);
-          const assetName = conflictedAsset?.name || `#${assetId}`;
-          throw new createError.BadRequest(`No hay stock disponible suficiente para ${assetName}`);
+          const assetName = conflictedAsset?.name || 'el activo seleccionado';
+          throw new createError.BadRequest(`No hay unidades disponibles suficientes para ${assetName}`);
         }
         const asset = await assetRepository.findByIdForUpdate(tx, assetId);
         const nextAvailable = asset.availableQuantity;

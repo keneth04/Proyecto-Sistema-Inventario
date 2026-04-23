@@ -22,7 +22,8 @@ const normalizeFieldLabel = (field = '') => {
 const normalizeDetailMessage = (detailMessage = '') => {
   if (!detailMessage) return 'Información inválida';
   if (detailMessage.startsWith('Campo no permitido')) return 'Información no permitida';
-  if (detailMessage.startsWith('Debe ser >=')) return 'Valor fuera de rango';
+  if (detailMessage.startsWith('Debe ser >=')) return 'Valor fuera del rango permitido';
+  if (detailMessage.startsWith('Valor inválido. Permitidos:')) return 'Selecciona una opción válida';
   return detailMessage;
 };
 
@@ -86,7 +87,7 @@ const asEmail = ({ value, field, source, required = true }) => {
 
   const asEnum = ({ value, field, source, required = true, values = [] }) => {
   if ((value === undefined || value === null) && !required) return undefined;
-  if (!values.includes(value)) throw buildValidationError(`Error de validación en ${source}`, [{ field, message: `Valor inválido. Permitidos: ${values.join(', ')}`, code: 'any.only' }]);
+  if (!values.includes(value)) throw buildValidationError(`Error de validación en ${source}`, [{ field, message: 'Selecciona una opción válida', code: 'any.only' }]);
   return value;
 };
 

@@ -16,13 +16,13 @@ const authService = {
     const user = await userRepository.findByEmail(email);
 
     if (!user || user.status !== 'ACTIVE' || !user.role?.isActive) {
-      throw new createError.Unauthorized('Credenciales inválidas');
+      throw new createError.Unauthorized('Credenciales incorrectas');
     }
 
     const isValidPassword = await bcrypt.compare(password, user.passwordHash);
 
     if (!isValidPassword) {
-      throw new createError.Unauthorized('Credenciales inválidas');
+      throw new createError.Unauthorized('Credenciales incorrectas');
     }
 
     const token = signAccessToken(user);

@@ -23,16 +23,16 @@ const returnService = {
 
     return prisma.$transaction(async (tx) => {
       const loan = await loanRepository.findByIdTx(tx, payload.loanId);
-      if (!loan) throw new createError.BadRequest('Préstamo inexistente');
+      if (!loan) throw new createError.BadRequest('El préstamo seleccionado no existe');
       if (loan.employeeId !== payload.employeeId) throw new createError.BadRequest('El empleado no corresponde al préstamo');
 
       for (const item of payload.items) {
         const loanItem = loan.items.find((loanLine) => loanLine.id === item.loanItemId && loanLine.assetId === item.assetId);
-        if (!loanItem) throw new createError.BadRequest(`Item de préstamo inválido: ${item.loanItemId}`);
+       if (!loanItem) throw new createError.BadRequest('Uno de los ítems de devolución no corresponde al préstamo');
 
         const remaining = loanItem.quantity - loanItem.returnedQuantity;
         if (item.quantity > remaining) {
-          throw new createError.BadRequest(`Cantidad devuelta excede pendiente para item ${item.loanItemId}`);
+          throw new createError.BadRequest('La cantidad a devolver supera lo pendiente del préstamo');
         }
       }
 

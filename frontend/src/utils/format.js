@@ -1,4 +1,5 @@
 const HUMAN_MESSAGE_MAP = [
+  [/credenciales inválidas/gi, 'Credenciales incorrectas'],
   [/body validation|error de validación en body|invalid payload/gi, 'Información inválida. Revisa los campos del formulario.'],
   [/error de validación en params|error de validación en query params/gi, 'Información inválida en la solicitud.'],
   [/foreign key/gi, 'El registro relacionado no existe o no está disponible.'],
