@@ -252,7 +252,7 @@ model InventoryMovement {
 model AuditLog {
   id                Int             @id @default(autoincrement())
   performedByUserId Int
-  id                Int             @id @default(autoincr employeeId        Int?
+  employeeId        Int?
   entityType        AuditEntityType
   entityId          Int
   action            AuditActionType
