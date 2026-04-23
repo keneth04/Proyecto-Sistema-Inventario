@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { AuditApi } from '../api/endpoints';
 import PageHeader from '../components/ui/PageHeader';
 import Table from '../components/Table';
-import { formatDateTime } from '../utils/format';
+import { formatDateTime, getErrorMessage } from '../utils/format';
+import { useToast } from '../components/Toast';
 
 const ACTION_LABELS = {
   CREATE: 'Creación',
@@ -43,29 +44,51 @@ const formatMetadata = (metadata) => {
 export default function AuditPage() {
   const [rows, setRows] = useState([]);
   const [filters, setFilters] = useState({ assetId: '', employeeId: '' });
-  const [pagination, setPagination] = useState({ total: 0 });
+  const [pagination, setPagination] = useState({ page: 1, pageSize: 20, total: 0 });
+  const [isLoading, setIsLoading] = useState(false);
+  const { push } = useToast();
 
-  const load = async () => {
-    if (filters.assetId) {
-      const { data } = await AuditApi.byAsset(filters.assetId, { page: 1, pageSize: 100 });
-      setRows(data.body.items);
-      setPagination(data.body.pagination || { total: data.body.items?.length || 0 });
-      return;
+  const load = async ({ nextPage = pagination.page, nextPageSize = pagination.pageSize, nextFilters = filters } = {}) => {
+    setIsLoading(true);
+    try {
+      if (nextFilters.assetId) {
+        const { data } = await AuditApi.byAsset(nextFilters.assetId, { page: nextPage, pageSize: nextPageSize });
+        setRows(data.body.items || []);
+        setPagination(data.body.pagination || { page: nextPage, pageSize: nextPageSize, total: data.body.items?.length || 0 });
+        return;
+      }
+      if (nextFilters.employeeId) {
+        const { data } = await AuditApi.byEmployee(nextFilters.employeeId, { page: nextPage, pageSize: nextPageSize });
+        setRows(data.body.items || []);
+        setPagination(data.body.pagination || { page: nextPage, pageSize: nextPageSize, total: data.body.items?.length || 0 });
+        return;
+      }
+      const { data } = await AuditApi.general({ page: nextPage, pageSize: nextPageSize });
+      setRows(data.body.items || []);
+      setPagination(data.body.pagination || { page: nextPage, pageSize: nextPageSize, total: data.body.items?.length || 0 });
+    } catch (error) {
+      push(getErrorMessage(error), 'error');
+    } finally {
+      setIsLoading(false);
     }
-    if (filters.employeeId) {
-      const { data } = await AuditApi.byEmployee(filters.employeeId, { page: 1, pageSize: 100 });
-      setRows(data.body.items);
-      setPagination(data.body.pagination || { total: data.body.items?.length || 0 });
-      return;
-    }
-    const { data } = await AuditApi.general({ page: 1, pageSize: 100 });
-    setRows(data.body.items);
-    setPagination(data.body.pagination || { total: data.body.items?.length || 0 });
   };
 
   useEffect(() => {
     load();
   }, []);
+
+  const totalPages = Math.max(1, Math.ceil((pagination.total || 0) / (pagination.pageSize || 20)));
+
+  const applyFilters = () => {
+    load({ nextPage: 1, nextFilters: filters });
+  };
+
+  const clearFilters = () => {
+    const resetFilters = { assetId: '', employeeId: '' };
+    setFilters(resetFilters);
+    load({ nextPage: 1, nextFilters: resetFilters });
+  };
+
 
   return (
     <div className="page-content">
@@ -73,11 +96,11 @@ export default function AuditPage() {
       <div className="list-toolbar md:grid-cols-4">
         <input placeholder="Filtrar por activo ID" value={filters.assetId} onChange={(e) => setFilters((v) => ({ ...v, assetId: e.target.value }))} />
         <input placeholder="Filtrar por empleado ID" value={filters.employeeId} onChange={(e) => setFilters((v) => ({ ...v, employeeId: e.target.value }))} />
-        <button className="btn-secondary" onClick={load}>Aplicar</button>
-        <button className="btn-secondary" onClick={() => { setFilters({ assetId: '', employeeId: '' }); }}>Limpiar</button>
+        <button className="btn-secondary" onClick={applyFilters} disabled={isLoading}>Aplicar</button>
+        <button className="btn-secondary" onClick={clearFilters} disabled={isLoading}>Limpiar</button>
       </div>
       <div className="mb-3 text-sm text-[#5b506c]">
-        {pagination.total || 0} registro(s) de historial
+        {isLoading ? 'Cargando trazabilidad...' : `${rows.length} registro(s) en página / ${pagination.total || 0} total`}
       </div>
       <Table
         columns={[
@@ -89,7 +112,27 @@ export default function AuditPage() {
           { key: 'summary', label: 'Detalle', render: (r) => <div className="space-y-1"><p>{r.summary}</p><p className="text-xs text-[#7a6f8e]">{formatMetadata(r.metadata)}</p></div> }
         ]}
         rows={rows}
+        loading={isLoading}
       />
+      <div className="list-footer">
+        <div className="flex items-center gap-2">
+          <span>Página {pagination.page || 1} de {totalPages}</span>
+          <select
+            className="w-auto"
+            value={pagination.pageSize}
+            onChange={(event) => load({ nextPage: 1, nextPageSize: Number(event.target.value) })}
+            disabled={isLoading}
+          >
+            <option value={10}>10 por página</option>
+            <option value={20}>20 por página</option>
+            <option value={50}>50 por página</option>
+          </select>
+        </div>
+        <div className="flex gap-2">
+          <button className="btn-secondary py-1.5" disabled={(pagination.page || 1) <= 1 || isLoading} onClick={() => load({ nextPage: (pagination.page || 1) - 1 })}>Anterior</button>
+          <button className="btn-secondary py-1.5" disabled={(pagination.page || 1) >= totalPages || isLoading} onClick={() => load({ nextPage: (pagination.page || 1) + 1 })}>Siguiente</button>
+        </div>
+      </div>
     </div>
   );
 }
