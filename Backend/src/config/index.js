@@ -48,6 +48,7 @@ const Config = {
   rateLimit: {
     auth: {
       windowMs: toPositiveInt(process.env.RATE_LIMIT_AUTH_WINDOW_MS, 15 * 60 * 1000),
+      max: toPositiveInt(process.env.RATE_LIMIT_AUTH_MAX, 10),
       resetPasswordWindowMs: toPositiveInt(process.env.RATE_LIMIT_RESET_PASSWORD_WINDOW_MS, 15 * 60 * 1000),
       resetPasswordMax: toPositiveInt(process.env.RATE_LIMIT_RESET_PASSWORD_MAX, 10)
     }

@@ -55,10 +55,20 @@ setInterval(() => {
   }
 }, 60 * 1000).unref();
 
-const authWindowMs = Config.rateLimit.auth.windowMs;
-const authMax = Config.rateLimit.auth.max;
-const resetPasswordWindowMs = Config.rateLimit.auth.resetPasswordWindowMs;
-const resetPasswordMax = Config.rateLimit.auth.resetPasswordMax;
+const authWindowMs = Number.isInteger(Config?.rateLimit?.auth?.windowMs) && Config.rateLimit.auth.windowMs > 0
+  ? Config.rateLimit.auth.windowMs
+  : 15 * 60 * 1000;
+const authMax = Number.isInteger(Config?.rateLimit?.auth?.max) && Config.rateLimit.auth.max > 0
+  ? Config.rateLimit.auth.max
+  : 10;
+const resetPasswordWindowMs = Number.isInteger(Config?.rateLimit?.auth?.resetPasswordWindowMs)
+  && Config.rateLimit.auth.resetPasswordWindowMs > 0
+  ? Config.rateLimit.auth.resetPasswordWindowMs
+  : 15 * 60 * 1000;
+const resetPasswordMax = Number.isInteger(Config?.rateLimit?.auth?.resetPasswordMax)
+  && Config.rateLimit.auth.resetPasswordMax > 0
+  ? Config.rateLimit.auth.resetPasswordMax
+  : 10;
 
 module.exports.AuthRateLimiters = {
   login: createRateLimiter({
