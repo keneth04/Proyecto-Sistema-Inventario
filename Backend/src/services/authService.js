@@ -4,6 +4,7 @@ const createError = require('http-errors');
 const { Config } = require('../config');
 const { userRepository } = require('../repositories/userRepository');
 const { passwordResetRepository } = require('../repositories/passwordResetRepository');
+const { auditRepository } = require('../repositories/auditRepository');
 const { signAccessToken } = require('../auth/jwt');
 const { sendPasswordResetEmail } = require('../auth/mailer');
 const { Logger } = require('../common/logger');
@@ -25,6 +26,14 @@ const authService = {
     }
 
     const token = signAccessToken(user);
+
+    await auditRepository.create({
+      performedByUserId: user.id,
+      entityType: 'USER',
+      entityId: user.id,
+      action: 'LOGIN',
+      summary: `Usuario ${user.email} inició sesión`
+    });
 
     return {
       token,

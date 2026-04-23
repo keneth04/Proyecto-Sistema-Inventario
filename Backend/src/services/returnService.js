@@ -76,7 +76,14 @@ const returnService = {
         loanId: payload.loanId,
         returnId: createdReturn.id,
         action: 'RETURN_REGISTERED',
-        summary: `Devolución #${createdReturn.id} registrada`
+        summary: `Devolución #${createdReturn.id} registrada`,
+        metadata: {
+          loanId: payload.loanId,
+          employeeId: payload.employeeId,
+          assets: payload.items.map((item) => ({ assetId: item.assetId, quantity: item.quantity })),
+          totalItems: payload.items.length,
+          totalQuantity: payload.items.reduce((acc, item) => acc + item.quantity, 0)
+        }
       });
 
       return createdReturn;

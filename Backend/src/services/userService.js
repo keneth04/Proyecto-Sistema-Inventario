@@ -63,7 +63,7 @@ const userService = {
   },
 
   update: async (id, payload, actorUserId) => {
-    await userService.findById(id);
+    const current = await userService.findById(id);
     const data = {};
 
     if (payload.firstName !== undefined) data.firstName = payload.firstName;
@@ -83,13 +83,25 @@ const userService = {
 
     const updated = await userRepository.update(id, data);
 
-    await auditRepository.create({
-      performedByUserId: actorUserId,
-      entityType: 'USER',
-      entityId: updated.id,
-      action: 'UPDATE',
-      summary: `Usuario ${updated.email} actualizado`
-    });
+    const changedStatus = payload.status !== undefined && payload.status !== current.status;
+    if (changedStatus) {
+      await auditRepository.create({
+        performedByUserId: actorUserId,
+        entityType: 'USER',
+        entityId: updated.id,
+        action: 'STATUS_CHANGED',
+        summary: `Usuario ${updated.email} ${updated.status === 'ACTIVE' ? 'activado' : 'desactivado'}`,
+        metadata: { previousStatus: current.status, newStatus: updated.status }
+      });
+    } else {
+      await auditRepository.create({
+        performedByUserId: actorUserId,
+        entityType: 'USER',
+        entityId: updated.id,
+        action: 'UPDATE',
+        summary: `Usuario ${updated.email} actualizado`
+      });
+    }
 
     return sanitize(updated);
   },

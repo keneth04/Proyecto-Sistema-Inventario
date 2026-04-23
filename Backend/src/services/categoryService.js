@@ -54,7 +54,7 @@ const categoryService = {
     return found;
   },
   update: async (id, payload, actorUserId) => {
-    await categoryService.findById(id);
+    const current = await categoryService.findById(id);
     await ensureUniqueCategoryName({ name: payload.name, excludedId: id });
     let updated;
     try {
@@ -62,7 +62,19 @@ const categoryService = {
     } catch (error) {
       mapCategoryError(error);
     }
-    await auditRepository.create({ performedByUserId: actorUserId, entityType: 'CATEGORY', entityId: updated.id, action: 'UPDATE', summary: `Categoría ${updated.name} actualizada` });
+    const changedStatus = payload.isActive !== undefined && payload.isActive !== current.isActive;
+    if (changedStatus) {
+      await auditRepository.create({
+        performedByUserId: actorUserId,
+        entityType: 'CATEGORY',
+        entityId: updated.id,
+        action: 'STATUS_CHANGED',
+        summary: `Categoría ${updated.name} ${updated.isActive ? 'activada' : 'desactivada'}`,
+        metadata: { previousStatus: current.isActive ? 'ACTIVE' : 'INACTIVE', newStatus: updated.isActive ? 'ACTIVE' : 'INACTIVE' }
+      });
+    } else {
+      await auditRepository.create({ performedByUserId: actorUserId, entityType: 'CATEGORY', entityId: updated.id, action: 'UPDATE', summary: `Categoría ${updated.name} actualizada` });
+    }
     return updated;
   },
   remove: async (id, actorUserId) => {

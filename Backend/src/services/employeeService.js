@@ -53,9 +53,22 @@ const employeeService = {
     return found;
   },
   update: async (id, payload, actorUserId) => {
-    await employeeService.findById(id);
+    const current = await employeeService.findById(id);
     const updated = await employeeRepository.update(id, payload);
-    await auditRepository.create({ performedByUserId: actorUserId, employeeId: updated.id, entityType: 'EMPLOYEE', entityId: updated.id, action: 'UPDATE', summary: `Empleado ${updated.employeeCode} actualizado` });
+    const changedStatus = payload.status !== undefined && payload.status !== current.status;
+    if (changedStatus) {
+      await auditRepository.create({
+        performedByUserId: actorUserId,
+        employeeId: updated.id,
+        entityType: 'EMPLOYEE',
+        entityId: updated.id,
+        action: 'STATUS_CHANGED',
+        summary: `Empleado ${updated.employeeCode} ${updated.status === 'ACTIVE' ? 'activado' : 'desactivado'}`,
+        metadata: { previousStatus: current.status, newStatus: updated.status }
+      });
+    } else {
+      await auditRepository.create({ performedByUserId: actorUserId, employeeId: updated.id, entityType: 'EMPLOYEE', entityId: updated.id, action: 'UPDATE', summary: `Empleado ${updated.employeeCode} actualizado` });
+    }
     return updated;
   },
   remove: async (id, actorUserId) => {
