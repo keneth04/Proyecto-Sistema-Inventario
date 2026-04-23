@@ -25,7 +25,7 @@ model Role {
 
 /// Usuario interno que opera el sistema (entrega, recibe, administra).
 model User {
-   id                     Int        @id @default(autoincrement())
+  id                     Int        @id @default(autoincrement())
   roleId                 Int
   firstName              String     @db.VarChar(80)
   lastName               String     @db.VarChar(80)
@@ -36,7 +36,6 @@ model User {
   resetPasswordTokenHash String?    @db.VarChar(64)
   resetPasswordExpiresAt DateTime?
   resetPasswordUsedAt    DateTime?
-
 
   role               Role                @relation(fields: [roleId], references: [id], onUpdate: Cascade, onDelete: Restrict)
   deliveredLoans     Loan[]              @relation("LoanDeliveredByUser")
@@ -159,7 +158,7 @@ model LoanItem {
   returnedQuantity Int     @default(0)
   notes            String? @db.VarChar(255)
 
-    loan        Loan         @relation(fields: [loanId], references: [id], onUpdate: Cascade, onDelete: Restrict)
+  loan        Loan         @relation(fields: [loanId], references: [id], onUpdate: Cascade, onDelete: Restrict)
   asset       Asset        @relation(fields: [assetId], references: [id], onUpdate: Cascade, onDelete: Restrict)
   returnItems ReturnItem[]
 
@@ -179,7 +178,6 @@ model Return {
   receivedByUserId Int
   returnDate       DateTime @default(now())
   observations     String?  @db.Text
-
 
   loan               Loan                @relation(fields: [loanId], references: [id], onUpdate: Cascade, onDelete: Restrict)
   employee           Employee            @relation(fields: [employeeId], references: [id], onUpdate: Cascade, onDelete: Restrict)
@@ -225,7 +223,7 @@ model InventoryMovement {
   id                Int                   @id @default(autoincrement())
   assetId           Int
   performedByUserId Int
-   employeeId        Int?
+  employeeId        Int?
   loanId            Int?
   returnId          Int?
   movementType      InventoryMovementType
@@ -267,7 +265,7 @@ model AuditLog {
 
   assetId  Int?
   loanId   Int?
-  returnId Int?ement())
+  returnId Int?
 
   createdAt DateTime @default(now())
 
