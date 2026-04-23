@@ -23,7 +23,7 @@ export default function LoginPage() {
     setError('');
     try {
       const { data } = await AuthApi.login(form);
-      login(data.body.user, data.body.token);
+      login(data.body.user);
       const target = location.state?.from?.pathname || '/';
       navigate(target, { replace: true });
     } catch (err) {

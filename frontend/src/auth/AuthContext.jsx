@@ -11,17 +11,11 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     const bootstrap = async () => {
-      if (!storage.getToken()) {
-        setIsBootstrapping(false);
-        return;
-      }
-
-        try {
+      try {
         const { data } = await AuthApi.me();
         setUser(data.body);
         storage.setUser(data.body);
       } catch {
-        storage.clearToken();
         storage.clearUser();
         setUser(null);
       } finally {
@@ -33,14 +27,12 @@ export function AuthProvider({ children }) {
     bootstrap();
   }, []);
 
-  const login = (nextUser, token) => {
-    storage.setToken(token);
+  const login = (nextUser) => {
     storage.setUser(nextUser);
     setUser(nextUser);
   };
 
   const logout = () => {
-    storage.clearToken();
     storage.clearUser();
     setUser(null);
   };

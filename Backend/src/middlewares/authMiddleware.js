@@ -1,16 +1,10 @@
 const createError = require('http-errors');
 const { verifyAccessToken } = require('../auth/jwt');
 const { userRepository } = require('../repositories/userRepository');
-const { getAuthTokenFromCookies } = require('../common/cookies');
+const { getAuthTokenFromCookies, getCsrfTokenFromCookies } = require('../common/cookies');
 
 
 const getTokenFromRequest = (req) => {
-  const authHeader = req.headers.authorization;
-
-  if (authHeader && authHeader.startsWith('Bearer ')) {
-    return authHeader.split(' ')[1];
-  }
-
   return getAuthTokenFromCookies(req);
 };
 
@@ -39,6 +33,16 @@ const AuthMiddleware = async (req, _res, next) => {
       email: user.email,
       role: user.role.code
     };
+
+    const requiresCsrfValidation = !['GET', 'HEAD', 'OPTIONS'].includes(req.method);
+    if (requiresCsrfValidation) {
+      const csrfHeaderToken = getCsrfTokenFromRequest(req);
+      const csrfCookieToken = getCsrfTokenFromCookies(req);
+
+      if (!csrfHeaderToken || !csrfCookieToken || csrfHeaderToken !== csrfCookieToken) {
+        throw new createError.Forbidden('CSRF token inválido');
+      }
+    }
 
     next();
 

@@ -30,17 +30,35 @@ const getAuthCookieOptions = () => ({
   path: '/'
 });
 
-const getAuthTokenFromCookies = (req) => {
+const getCsrfCookieOptions = () => ({
+  httpOnly: false,
+  secure: Config.session.secure,
+  sameSite: Config.session.sameSite,
+  maxAge: Config.session.maxAgeMs,
+  path: '/'
+});
+
+const getCookieValue = (req, cookieName) => {
   const cookieHeader = req.headers?.cookie;
   if (!cookieHeader) {
     return null;
   }
 
   const parsed = parseCookies(cookieHeader);
-  return parsed[Config.session.cookieName] || null;
+    return parsed[cookieName] || null;
+};
+
+const getAuthTokenFromCookies = (req) => {
+  return getCookieValue(req, Config.session.cookieName);
+};
+
+const getCsrfTokenFromCookies = (req) => {
+  return getCookieValue(req, Config.session.csrfCookieName);
 };
 
 module.exports = {
   getAuthCookieOptions,
-  getAuthTokenFromCookies
+  getCsrfCookieOptions,
+  getAuthTokenFromCookies,
+  getCsrfTokenFromCookies
 };

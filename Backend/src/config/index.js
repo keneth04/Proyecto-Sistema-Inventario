@@ -41,6 +41,7 @@ const Config = {
 
   session: {
     cookieName: process.env.AUTH_COOKIE_NAME || 'auth_token',
+    csrfCookieName: process.env.CSRF_COOKIE_NAME || 'csrf_token',
     sameSite: process.env.AUTH_COOKIE_SAMESITE ||'strict',
     secure: process.env.NODE_ENV === 'production',
     maxAgeMs: toPositiveInt(process.env.AUTH_COOKIE_MAX_AGE_MS, 8 * 60 * 60 * 1000)

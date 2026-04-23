@@ -1,11 +1,21 @@
 const { authService } = require('../services/authService');
 const { Response } = require('../common/response');
+const { Config } = require('../config');
+const { getAuthCookieOptions, getCsrfCookieOptions } = require('../common/cookies');
+const crypto = require('crypto');
 
 const authController = {
   login: async (req, res, next) => {
     try {
       const data = await authService.login(req.body);
-      return Response.success(res, 200, 'Login exitoso', data);
+      const csrfToken = crypto.randomBytes(32).toString('hex');
+
+      res.cookie(Config.session.cookieName, data.token, getAuthCookieOptions());
+      res.cookie(Config.session.csrfCookieName, csrfToken, getCsrfCookieOptions());
+
+      return Response.success(res, 200, 'Login exitoso', {
+        user: data.user
+      });
     } catch (error) {
       return next(error);
     }
