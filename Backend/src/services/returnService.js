@@ -83,8 +83,10 @@ const returnService = {
     });
   },
   list: async ({ page, pageSize }) => {
-    const [items, total] = await Promise.all([returnRepository.list(paginate({ page, pageSize })), returnRepository.count()]);
-    return { items, pagination: { page, pageSize, total } };
+    const normalizedPage = Math.max(Number.parseInt(page, 10) || 1, 1);
+    const normalizedPageSize = Math.min(Math.max(Number.parseInt(pageSize, 10) || 20, 1), 200);
+    const [items, total] = await Promise.all([returnRepository.list(paginate({ page: normalizedPage, pageSize: normalizedPageSize })), returnRepository.count()]);
+    return { items, pagination: { page: normalizedPage, pageSize: normalizedPageSize, total } };
   },
   findById: async (id) => {
     const found = await returnRepository.findById(id);
