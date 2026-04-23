@@ -11,7 +11,7 @@ const includeRelations = {
 const auditRepository = {
   createTx: (tx, data) => tx.auditLog.create({ data }),
   create: (data) => prisma.auditLog.create({ data }),
-  list: ({ skip, take }) => prisma.auditLog.findMany({ skip, take, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }], include: includeRelations }),
+  list: ({ skip, take, where = {} }) => prisma.auditLog.findMany({ where, skip, take, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }], include: includeRelations }),
   byAsset: (assetId, { skip, take }) => prisma.auditLog.findMany({ where: { assetId }, skip, take, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }], include: includeRelations }),
   byEmployee: (employeeId, { skip, take }) => prisma.auditLog.findMany({ where: { employeeId }, skip, take, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }], include: includeRelations }),
   count: (where = {}) => prisma.auditLog.count({ where })

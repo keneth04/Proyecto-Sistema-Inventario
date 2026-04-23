@@ -43,7 +43,7 @@ const formatMetadata = (metadata) => {
 
 export default function AuditPage() {
   const [rows, setRows] = useState([]);
-  const [filters, setFilters] = useState({ assetId: '', employeeId: '' });
+  const [filters, setFilters] = useState({ assetName: '', employeeName: '', performedBy: '', module: '', action: '', date: '' });
   const [pagination, setPagination] = useState({ page: 1, pageSize: 20, total: 0 });
   const [isLoading, setIsLoading] = useState(false);
   const { push } = useToast();
@@ -51,19 +51,7 @@ export default function AuditPage() {
   const load = async ({ nextPage = pagination.page, nextPageSize = pagination.pageSize, nextFilters = filters } = {}) => {
     setIsLoading(true);
     try {
-      if (nextFilters.assetId) {
-        const { data } = await AuditApi.byAsset(nextFilters.assetId, { page: nextPage, pageSize: nextPageSize });
-        setRows(data.body.items || []);
-        setPagination(data.body.pagination || { page: nextPage, pageSize: nextPageSize, total: data.body.items?.length || 0 });
-        return;
-      }
-      if (nextFilters.employeeId) {
-        const { data } = await AuditApi.byEmployee(nextFilters.employeeId, { page: nextPage, pageSize: nextPageSize });
-        setRows(data.body.items || []);
-        setPagination(data.body.pagination || { page: nextPage, pageSize: nextPageSize, total: data.body.items?.length || 0 });
-        return;
-      }
-      const { data } = await AuditApi.general({ page: nextPage, pageSize: nextPageSize });
+      const { data } = await AuditApi.general({ page: nextPage, pageSize: nextPageSize, ...nextFilters });
       setRows(data.body.items || []);
       setPagination(data.body.pagination || { page: nextPage, pageSize: nextPageSize, total: data.body.items?.length || 0 });
     } catch (error) {
@@ -84,7 +72,7 @@ export default function AuditPage() {
   };
 
   const clearFilters = () => {
-    const resetFilters = { assetId: '', employeeId: '' };
+    const resetFilters = { assetName: '', employeeName: '', performedBy: '', module: '', action: '', date: '' };
     setFilters(resetFilters);
     load({ nextPage: 1, nextFilters: resetFilters });
   };
@@ -94,8 +82,18 @@ export default function AuditPage() {
     <div className="page-content">
       <PageHeader title="Trazabilidad" subtitle="Historial de acciones del sistema" />
       <div className="list-toolbar md:grid-cols-4">
-        <input placeholder="Filtrar por activo ID" value={filters.assetId} onChange={(e) => setFilters((v) => ({ ...v, assetId: e.target.value }))} />
-        <input placeholder="Filtrar por empleado ID" value={filters.employeeId} onChange={(e) => setFilters((v) => ({ ...v, employeeId: e.target.value }))} />
+        <input placeholder="Filtrar por nombre de activo" value={filters.assetName} onChange={(e) => setFilters((v) => ({ ...v, assetName: e.target.value }))} />
+        <input placeholder="Filtrar por empleado" value={filters.employeeName} onChange={(e) => setFilters((v) => ({ ...v, employeeName: e.target.value }))} />
+        <input placeholder="Filtrar por usuario ejecutor" value={filters.performedBy} onChange={(e) => setFilters((v) => ({ ...v, performedBy: e.target.value }))} />
+        <input type="date" value={filters.date} onChange={(e) => setFilters((v) => ({ ...v, date: e.target.value }))} />
+        <select value={filters.module} onChange={(e) => setFilters((v) => ({ ...v, module: e.target.value }))}>
+          <option value="">Todos los módulos</option>
+          {Object.entries(ENTITY_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+        </select>
+        <select value={filters.action} onChange={(e) => setFilters((v) => ({ ...v, action: e.target.value }))}>
+          <option value="">Todas las acciones</option>
+          {Object.entries(ACTION_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+        </select>
         <button className="btn-secondary" onClick={applyFilters} disabled={isLoading}>Aplicar</button>
         <button className="btn-secondary" onClick={clearFilters} disabled={isLoading}>Limpiar</button>
       </div>
