@@ -4,10 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "set DEBUG=app: * & nodemon index.js",
+    "dev": "DEBUG=app:* nodemon index.js",
     "test": "node --test",
     "test:ci": "node --test",
-    "test:jest": "jest --config jest.config.cjs",
+    "test:jest": "node --test test/jest/**/*.test.js",
     "prisma:generate": "prisma generate",
     "prisma:format": "prisma format",
     "prisma:migrate": "prisma migrate dev"
