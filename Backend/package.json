@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "DEBUG=app:* nodemon index.js",
+    "dev": "cross-env DEBUG=app:* nodemon index.js",
     "test": "node --test",
     "test:ci": "node --test",
     "test:jest": "node --test test/jest/**/*.test.js",
@@ -28,6 +28,7 @@
     "nodemailer": "^8.0.2"
   },
   "devDependencies": {
+    "cross-env": "^10.1.0",
     "nodemon": "^3.1.11",
     "prisma": "^6.6.0"
   }

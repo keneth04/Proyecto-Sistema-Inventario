@@ -10,6 +10,7 @@ const DEFAULT_CONDITION = 'GOOD';
 export default function ReturnCreatePage() {
   const [activeLoans, setActiveLoans] = useState([]);
   const [selectedLoanId, setSelectedLoanId] = useState(null);
+  const [itemQuantities, setItemQuantities] = useState({});
   const [form, setForm] = useState({ itemCondition: DEFAULT_CONDITION, observations: '', returnDate: '' });
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -91,6 +92,32 @@ export default function ReturnCreatePage() {
     [selectedLoan]
   );
 
+  useEffect(() => {
+    if (!selectedLoan) {
+      setItemQuantities({});
+      return;
+    }
+
+    const nextQuantities = pendingItems.reduce((acc, item) => {
+      acc[item.loanItemId] = String(item.pendingQuantity);
+      return acc;
+    }, {});
+
+    setItemQuantities(nextQuantities);
+  }, [selectedLoan, pendingItems]);
+
+  const selectedItems = useMemo(() => {
+    return pendingItems
+      .map((item) => {
+        const requestedQuantity = Number.parseInt(itemQuantities[item.loanItemId] || '0', 10);
+        return {
+          ...item,
+          requestedQuantity: Number.isInteger(requestedQuantity) ? requestedQuantity : 0
+        };
+      })
+      .filter((item) => item.requestedQuantity > 0);
+  }, [itemQuantities, pendingItems]);
+
   const reloadActiveLoans = async () => {
     setLoading(true);
     try {
@@ -117,6 +144,17 @@ export default function ReturnCreatePage() {
       return;
     }
 
+    if (selectedItems.length === 0) {
+      push('Debes indicar al menos una cantidad mayor a 0 para registrar la devolución.', 'error');
+      return;
+    }
+
+    const exceedsPending = selectedItems.some((item) => item.requestedQuantity > item.pendingQuantity);
+    if (exceedsPending) {
+      push('La cantidad a devolver no puede superar lo pendiente por ítem.', 'error');
+      return;
+    }
+
     try {
       setSubmitting(true);
       await ReturnApi.create({
@@ -124,10 +162,10 @@ export default function ReturnCreatePage() {
         employeeId: selectedLoan.employeeId,
         returnDate: form.returnDate || undefined,
         observations: form.observations || undefined,
-        items: pendingItems.map((item) => ({
+        items: selectedItems.map((item) => ({
           loanItemId: item.loanItemId,
           assetId: item.assetId,
-          quantity: item.pendingQuantity,
+          quantity: item.requestedQuantity,
           itemCondition: form.itemCondition,
           observations: form.observations || undefined
         }))
@@ -232,6 +270,37 @@ export default function ReturnCreatePage() {
           )}
         </div>
 
+        <div className="space-y-2 rounded-xl border border-[#e6deef] bg-[#f8f5fc] p-3">
+          <p className="text-sm font-semibold text-[#493b5f]">Cantidades a devolver por ítem</p>
+          {selectedLoan ? (
+            <div className="space-y-2">
+              {pendingItems.map((item) => (
+                <div key={item.loanItemId} className="grid gap-2 rounded-lg border border-[#e6deef] bg-white p-2 md:grid-cols-[1fr_auto] md:items-center">
+                  <div className="text-sm text-[#493b5f]">
+                    {item.assetName} <span className="text-xs text-[#8d7aa8]">(Pendiente: {item.pendingQuantity})</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <label className="text-xs text-[#8d7aa8]" htmlFor={`qty-${item.loanItemId}`}>
+                      Cantidad
+                    </label>
+                    <input
+                      id={`qty-${item.loanItemId}`}
+                      type="number"
+                      min="0"
+                      max={item.pendingQuantity}
+                      value={itemQuantities[item.loanItemId] || '0'}
+                      onChange={(e) => setItemQuantities((prev) => ({ ...prev, [item.loanItemId]: e.target.value }))}
+                      className="w-24"
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-[#8d7aa8]">Selecciona un préstamo para asignar cantidades por activo.</p>
+          )}
+        </div>
+
         <div className="grid gap-3 md:grid-cols-3">
           <select
             value={form.itemCondition}
@@ -257,7 +326,7 @@ export default function ReturnCreatePage() {
           />
         </div>
 
-        <button className="btn-primary" disabled={!selectedLoan || submitting}>
+        <button className="btn-primary" disabled={!selectedLoan || submitting || selectedItems.length === 0}>
           {submitting ? 'Registrando...' : 'Registrar devolución'}
         </button>
       </form>
