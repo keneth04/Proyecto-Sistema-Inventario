@@ -63,6 +63,16 @@ const authService = {
       status: user.status
     };
   },
+  
+  logout: async ({ userId, email }) => {
+    await auditRepository.create({
+      performedByUserId: userId,
+      entityType: 'USER',
+      entityId: userId,
+      action: 'LOGOUT',
+      summary: `Usuario ${email} cerró sesión`
+    });
+  },
 
   forgotPassword: async ({ email }) => {
     const user = await userRepository.findByEmail(email);

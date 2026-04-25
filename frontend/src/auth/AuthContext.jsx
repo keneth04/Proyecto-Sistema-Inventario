@@ -32,9 +32,13 @@ export function AuthProvider({ children }) {
     setUser(nextUser);
   };
 
-  const logout = () => {
-    storage.clearUser();
-    setUser(null);
+  const logout = async () => {
+    try {
+      await AuthApi.logout();
+    } finally {
+      storage.clearUser();
+      setUser(null);
+    }
   };
 
   const value = useMemo(

@@ -28,6 +28,33 @@ const authController = {
       return next(error);
     }
     },
+
+    logout: async (req, res, next) => {
+    try {
+      await authService.logout({
+        userId: req.user.id,
+        email: req.user.email
+      });
+
+      res.clearCookie(Config.session.cookieName, {
+        httpOnly: true,
+        secure: Config.session.secure,
+        sameSite: Config.session.sameSite,
+        path: '/'
+      });
+      res.clearCookie(Config.session.csrfCookieName, {
+        httpOnly: false,
+        secure: Config.session.secure,
+        sameSite: Config.session.sameSite,
+        path: '/'
+      });
+
+      return Response.success(res, 200, 'Logout exitoso');
+    } catch (error) {
+      return next(error);
+    }
+  },
+
   forgotPassword: async (req, res, next) => {
     try {
       await authService.forgotPassword(req.body);
