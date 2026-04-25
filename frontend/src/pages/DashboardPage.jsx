@@ -11,11 +11,8 @@ const movementTypeLabels = {
   INITIAL_LOAD: 'Carga inicial',
   LOAN_OUT: 'Préstamo',
   RETURN_IN: 'Devolución',
-  ADJUSTMENT_UP: 'Ajuste +',
-  ADJUSTMENT_DOWN: 'Ajuste -',
-  MAINTENANCE_OUT: 'Salida a mantenimiento',
-  MAINTENANCE_IN: 'Entrada de mantenimiento',
-  RETIREMENT: 'Retiro'
+  MANUAL_ADJUSTMENT: 'Ajuste manual',
+  WRITE_OFF: 'Baja por merma'
 };
 
 const formatActor = (user) => {
