@@ -6,6 +6,10 @@ const { movementRepository } = require('../repositories/movementRepository');
 const { auditRepository } = require('../repositories/auditRepository');
 const { employeeRepository } = require('../repositories/employeeRepository');
 
+const DEFAULT_PAGE = 1;
+const DEFAULT_PAGE_SIZE = 20;
+const MAX_PAGE_SIZE = 100;
+
 const toPositiveInt = (value, fallback) => {
   const parsed = Number.parseInt(value, 10);
   if (Number.isNaN(parsed) || parsed < 1) return fallback;
@@ -13,8 +17,8 @@ const toPositiveInt = (value, fallback) => {
 };
 
 const paginate = ({ page, pageSize }) => {
-  const safePage = toPositiveInt(page, 1);
-  const safePageSize = Math.min(toPositiveInt(pageSize, 20), 100);
+  const safePage = toPositiveInt(page, DEFAULT_PAGE);
+  const safePageSize = Math.min(toPositiveInt(pageSize, DEFAULT_PAGE_SIZE), MAX_PAGE_SIZE);
   return {
     skip: (safePage - 1) * safePageSize,
     take: safePageSize,

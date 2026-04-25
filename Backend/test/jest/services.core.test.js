@@ -85,7 +85,7 @@ test('loanService.findById recalcula estado y persiste cuando difiere', async ()
   assert.equal(result.status, 'CLOSED');
 });
 
-test('returnService.list normaliza paginación y limita pageSize a 200', async () => {
+test('returnService.list normaliza paginación y limita pageSize a 100', async () => {
   let receivedPagination;
   returnRepository.list = async (pagination) => {
     receivedPagination = pagination;
@@ -97,11 +97,11 @@ test('returnService.list normaliza paginación y limita pageSize a 200', async (
 
   assert.deepEqual(receivedPagination, {
     skip: 0,
-    take: 200
+    take: 100
   });
   assert.deepEqual(response.pagination, {
     page: 1,
-    pageSize: 200,
+    pageSize: 100,
     total: 0
   });
 });

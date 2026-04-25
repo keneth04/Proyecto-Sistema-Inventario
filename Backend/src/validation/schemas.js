@@ -1,6 +1,9 @@
 const createError = require('http-errors');
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const DEFAULT_PAGE = 1;
+const DEFAULT_PAGE_SIZE = 20;
+const MAX_PAGE_SIZE = 100;
 
 const FIELD_LABELS = {
   body: 'Formulario',
@@ -91,9 +94,15 @@ const asEmail = ({ value, field, source, required = true }) => {
   return value;
 };
 
+const toPositiveInt = (value, fallback) => {
+  const parsed = Number.parseInt(String(value), 10);
+  if (Number.isNaN(parsed) || parsed < 1) return fallback;
+  return parsed;
+};
+
 const parseListQuery = (query) => ({
-  page: Number.parseInt(query.page || '1', 10) || 1,
-  pageSize: Math.min(Number.parseInt(query.pageSize || '20', 10) || 20, 100)
+  page: toPositiveInt(query.page, DEFAULT_PAGE),
+  pageSize: Math.min(toPositiveInt(query.pageSize, DEFAULT_PAGE_SIZE), MAX_PAGE_SIZE)
 });
 
 const authSchemas = {

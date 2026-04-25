@@ -7,7 +7,22 @@ const { assetRepository } = require('../repositories/assetRepository');
 const { auditRepository } = require('../repositories/auditRepository');
 const { employeeRepository } = require('../repositories/employeeRepository');
 
+const DEFAULT_PAGE = 1;
+const DEFAULT_PAGE_SIZE = 20;
+const MAX_PAGE_SIZE = 100;
+
+const toPositiveInt = (value, fallback) => {
+  const parsed = Number.parseInt(value, 10);
+  if (Number.isNaN(parsed) || parsed < 1) return fallback;
+  return parsed;
+};
+
 const paginate = ({ page, pageSize }) => ({ skip: (page - 1) * pageSize, take: pageSize });
+
+const normalizePagination = ({ page, pageSize }) => ({
+  page: toPositiveInt(page, DEFAULT_PAGE),
+  pageSize: Math.min(toPositiveInt(pageSize, DEFAULT_PAGE_SIZE), MAX_PAGE_SIZE)
+});
 
 const calculateLoanStatusFromItems = (items) => {
   const allReturned = items.every((item) => item.returnedQuantity >= item.quantity);
@@ -90,10 +105,9 @@ const returnService = {
     });
   },
   list: async ({ page, pageSize }) => {
-    const normalizedPage = Math.max(Number.parseInt(page, 10) || 1, 1);
-    const normalizedPageSize = Math.min(Math.max(Number.parseInt(pageSize, 10) || 20, 1), 200);
-    const [items, total] = await Promise.all([returnRepository.list(paginate({ page: normalizedPage, pageSize: normalizedPageSize })), returnRepository.count()]);
-    return { items, pagination: { page: normalizedPage, pageSize: normalizedPageSize, total } };
+    const pagination = normalizePagination({ page, pageSize });
+    const [items, total] = await Promise.all([returnRepository.list(paginate(pagination)), returnRepository.count()]);
+    return { items, pagination: { ...pagination, total } };
   },
   findById: async (id) => {
     const found = await returnRepository.findById(id);
