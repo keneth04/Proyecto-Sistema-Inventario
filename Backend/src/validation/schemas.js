@@ -14,7 +14,18 @@ const FIELD_LABELS = {
   categoryId: 'Categoría',
   assetId: 'Activo',
   loanId: 'Préstamo',
-  loanItemId: 'Ítem de préstamo'
+  loanItemId: 'Ítem de préstamo',
+  firstName: 'Nombre',
+  lastName: 'Apellido',
+  email: 'Correo',
+  password: 'Contraseña',
+  newPassword: 'Nueva contraseña',
+  token: 'Token',
+  status: 'Estado',
+  roleCode: 'Rol',
+  page: 'Página',
+  pageSize: 'Tamaño de página',
+  items: 'Ítems'
 };
 
 const normalizeFieldLabel = (field = '') => {
@@ -27,13 +38,20 @@ const normalizeDetailMessage = (detailMessage = '') => {
   if (detailMessage.startsWith('Campo no permitido')) return 'Información no permitida';
   if (detailMessage.startsWith('Debe ser >=')) return 'Valor fuera del rango permitido';
   if (detailMessage.startsWith('Valor inválido. Permitidos:')) return 'Selecciona una opción válida';
+  if (detailMessage.includes('Campo obligatorio')) return 'Este campo es obligatorio';
+  if (/máximo \d+ caracteres/i.test(detailMessage)) return detailMessage;
+  if (/correo inválido/i.test(detailMessage)) return 'Correo electrónico inválido';
+  if (/debe incluir al menos un elemento/i.test(detailMessage)) return 'Debes incluir al menos un elemento';
+  if (/información inválida/i.test(detailMessage)) return 'Revisa el valor ingresado';
   return detailMessage;
 };
 
 
 const buildValidationError = (message, details = []) => {
   const isValidationMessage = typeof message === 'string' && message.includes('validación');
-  const normalizedMessage = isValidationMessage ? 'Información inválida' : message;
+  const normalizedMessage = isValidationMessage
+    ? 'Información inválida. Revisa los campos del formulario.'
+    : message;
   const error = new createError.BadRequest(normalizedMessage);
   error.details = details.map((detail) => ({
     ...detail,

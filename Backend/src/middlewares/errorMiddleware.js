@@ -1,6 +1,25 @@
 const createError = require('http-errors');
 const { Logger } = require('../common/logger');
 
+const GENERIC_CLIENT_ERROR_MESSAGE = 'No fue posible completar la operación.';
+const GENERIC_SERVER_ERROR_MESSAGE = 'Error interno del servidor';
+
+const normalizeErrorMessage = (statusCode, message) => {
+  if (statusCode >= 500) {
+    return GENERIC_SERVER_ERROR_MESSAGE;
+  }
+
+  if (statusCode === 400 && (!message || /validaci[oó]n/i.test(message))) {
+    return 'Información inválida. Revisa los campos del formulario.';
+  }
+
+  if (!message) {
+    return GENERIC_CLIENT_ERROR_MESSAGE;
+  }
+
+  return message;
+};
+
 module.exports.ErrorMiddleware = (err, req, res, next) => {
 
   if (!err) {
@@ -8,10 +27,7 @@ module.exports.ErrorMiddleware = (err, req, res, next) => {
   }
 
   const statusCode = err.statusCode || 500;
-  const message =
-    statusCode >= 500
-      ? 'Error interno del servidor'
-      : (err.message || 'Error interno del servidor');
+  const message = normalizeErrorMessage(statusCode, err.message);
   const requestId = req?.requestId;
   const details = Array.isArray(err.details) ? err.details : undefined;
 

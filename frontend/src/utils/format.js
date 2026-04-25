@@ -6,10 +6,31 @@ const HUMAN_MESSAGE_MAP = [
   [/\bid\b/gi, 'código interno']
 ];
 
+const normalizeHumanMessage = (message = '') =>
+  HUMAN_MESSAGE_MAP.reduce(
+    (acc, [pattern, replacement]) => acc.replace(pattern, replacement),
+    message
+  );
+
+const getFirstDetailMessage = (error) => {
+  const detail = error?.response?.data?.details?.[0];
+  if (!detail?.message) return null;
+  if (detail?.field) {
+    return `${detail.field}: ${detail.message}`;
+  }
+  return detail.message;
+};
+
 export const getErrorMessage = (error) => {
   const backendMessage = error?.response?.data?.message;
+  const firstDetail = getFirstDetailMessage(error);
+
+  if (firstDetail) {
+    return normalizeHumanMessage(firstDetail);
+  }
+
   if (!backendMessage) return 'No fue posible completar la operación.';
-  return HUMAN_MESSAGE_MAP.reduce((message, [pattern, replacement]) => message.replace(pattern, replacement), backendMessage);
+  return normalizeHumanMessage(backendMessage);
 };
 
 export const formatDateTime = (value) => {
