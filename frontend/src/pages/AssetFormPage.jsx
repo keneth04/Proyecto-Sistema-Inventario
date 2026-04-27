@@ -5,7 +5,7 @@ import PageHeader from '../components/ui/PageHeader';
 import { useToast } from '../components/Toast';
 import { getErrorMessage } from '../utils/format';
 
-const emptyForm = { categoryId: '', assetCode: '', name: '', brand: '', model: '', serialNumber: '', description: '', totalQuantity: 1, minimumStock: 0, status: 'ACTIVE' };
+const emptyForm = { categoryId: '', assetCode: '', name: '', brand: '', model: '', serialNumber: '', description: '', totalQuantity: 1, status: 'ACTIVE' };
 
 const normalizeAssetForForm = (asset) => ({
   categoryId: String(asset?.categoryId ?? ''),
@@ -16,7 +16,6 @@ const normalizeAssetForForm = (asset) => ({
   serialNumber: asset?.serialNumber ?? '',
   description: asset?.description ?? '',
   totalQuantity: asset?.totalQuantity ?? 1,
-  minimumStock: asset?.minimumStock ?? 0,
   status: asset?.status ?? 'ACTIVE'
 });
 
@@ -51,7 +50,7 @@ export default function AssetFormPage() {
       model: form.model || undefined,
       serialNumber: form.serialNumber || undefined,
       description: form.description || undefined,
-      minimumStock: Number(form.minimumStock),
+      totalQuantity: Number(form.totalQuantity),
       status: form.status
     };
 
@@ -61,8 +60,7 @@ export default function AssetFormPage() {
       } else {
         await AssetApi.create({
           ...basePayload,
-          assetCode: form.assetCode,
-          totalQuantity: Number(form.totalQuantity)
+          assetCode: form.assetCode
         });
       }
       push('Activo guardado correctamente', 'info');
@@ -85,8 +83,7 @@ export default function AssetFormPage() {
         <input placeholder="Marca" value={form.brand || ''} onChange={(e) => setForm((v) => ({ ...v, brand: e.target.value }))} />
         <input placeholder="Modelo" value={form.model || ''} onChange={(e) => setForm((v) => ({ ...v, model: e.target.value }))} />
         <input placeholder="Serial" value={form.serialNumber || ''} onChange={(e) => setForm((v) => ({ ...v, serialNumber: e.target.value }))} />
-        {!isEdit ? <input type="number" min="1" placeholder="Cantidad total" value={form.totalQuantity} onChange={(e) => setForm((v) => ({ ...v, totalQuantity: e.target.value }))} /> : null}
-        <input type="number" min="0" placeholder="Stock mínimo" value={form.minimumStock} onChange={(e) => setForm((v) => ({ ...v, minimumStock: e.target.value }))} />
+        <input type="number" min="0" placeholder="Cantidad total" value={form.totalQuantity} onChange={(e) => setForm((v) => ({ ...v, totalQuantity: e.target.value }))} />
         <select value={form.status} onChange={(e) => setForm((v) => ({ ...v, status: e.target.value }))}>
           <option value="ACTIVE">Activo</option><option value="INACTIVE">Inactivo</option><option value="MAINTENANCE">Mantenimiento</option><option value="RETIRED">Retirado</option>
         </select>

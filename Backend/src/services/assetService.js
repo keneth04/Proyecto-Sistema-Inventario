@@ -73,13 +73,44 @@ const assetService = {
     return found;
   },
   update: async (id, payload, actorUserId) => {
-    await assetService.findById(id);
+    const current = await assetService.findById(id);
     if (payload.categoryId) {
       const category = await categoryRepository.findById(payload.categoryId);
       if (!category) throw new createError.BadRequest('Categoría inválida');
     }
-    const updated = await assetRepository.update(id, payload);
+    const hasTotalQuantityUpdate = Number.isInteger(payload.totalQuantity);
+    const currentlyLoaned = Math.max((current.totalQuantity || 0) - (current.availableQuantity || 0), 0);
+
+    if (hasTotalQuantityUpdate && payload.totalQuantity < currentlyLoaned) {
+      throw new createError.BadRequest(
+        `La cantidad total no puede ser menor que las unidades prestadas (${currentlyLoaned}).`
+      );
+    }
+
+    const updateData = { ...payload };
+    if (hasTotalQuantityUpdate) {
+      updateData.availableQuantity = payload.totalQuantity - currentlyLoaned;
+    }
+
+    const updated = await assetRepository.update(id, updateData);
     await auditRepository.create({ performedByUserId: actorUserId, entityType: 'ASSET', entityId: updated.id, assetId: updated.id, action: 'UPDATE', summary: `Activo ${updated.assetCode} actualizado` });
+    if (hasTotalQuantityUpdate && payload.totalQuantity !== current.totalQuantity) {
+      await auditRepository.create({
+        performedByUserId: actorUserId,
+        entityType: 'ASSET',
+        entityId: updated.id,
+        assetId: updated.id,
+        action: 'STOCK_ADJUSTED',
+        summary: `Cantidad del activo ${updated.name} ajustada de ${current.totalQuantity} a ${payload.totalQuantity} unidades.`,
+        metadata: {
+          previousTotalQuantity: current.totalQuantity,
+          newTotalQuantity: payload.totalQuantity,
+          loanedQuantity: currentlyLoaned,
+          previousAvailableQuantity: current.availableQuantity,
+          newAvailableQuantity: updated.availableQuantity
+        }
+      });
+    }
     return updated;
   },
   changeStatus: async (id, status, actorUserId) => {

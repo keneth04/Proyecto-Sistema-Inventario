@@ -250,7 +250,7 @@ const userSchemas = {
     const assetSchemas = {
   create: (body) => {
     assertObject(body, 'body');
-    allowOnly(body, ['categoryId', 'assetCode', 'name', 'brand', 'model', 'serialNumber', 'description', 'totalQuantity', 'minimumStock', 'status'], 'body');
+    allowOnly(body, ['categoryId', 'assetCode', 'name', 'brand', 'model', 'serialNumber', 'description', 'totalQuantity', 'status'], 'body');
     const totalQuantity = asInt({ value: body.totalQuantity, field: 'totalQuantity', source: 'body', min: 1 });
     return {
       categoryId: asInt({ value: body.categoryId, field: 'categoryId', source: 'body', min: 1 }),
@@ -261,13 +261,12 @@ const userSchemas = {
       serialNumber: asString({ value: body.serialNumber, field: 'serialNumber', source: 'body', required: false, max: 120 }),
       description: asString({ value: body.description, field: 'description', source: 'body', required: false, max: 2000 }),
       totalQuantity,
-      minimumStock: asInt({ value: body.minimumStock ?? 0, field: 'minimumStock', source: 'body', min: 0 }),
       status: asEnum({ value: body.status || 'ACTIVE', field: 'status', source: 'body', values: ['ACTIVE', 'INACTIVE', 'MAINTENANCE', 'RETIRED'] })
     };
   },
   update: (body) => {
     assertObject(body, 'body');
-    allowOnly(body, ['categoryId', 'name', 'brand', 'model', 'serialNumber', 'description', 'minimumStock', 'status'], 'body');
+    allowOnly(body, ['categoryId', 'name', 'brand', 'model', 'serialNumber', 'description', 'totalQuantity', 'status'], 'body');
     return {
       categoryId: asInt({ value: body.categoryId, field: 'categoryId', source: 'body', required: false, min: 1 }),
       name: asString({ value: body.name, field: 'name', source: 'body', required: false, max: 120 }),
@@ -275,7 +274,7 @@ const userSchemas = {
       model: asString({ value: body.model, field: 'model', source: 'body', required: false, max: 80 }),
       serialNumber: asString({ value: body.serialNumber, field: 'serialNumber', source: 'body', required: false, max: 120 }),
       description: asString({ value: body.description, field: 'description', source: 'body', required: false, max: 2000 }),
-      minimumStock: asInt({ value: body.minimumStock, field: 'minimumStock', source: 'body', required: false, min: 0 }),
+      totalQuantity: asInt({ value: body.totalQuantity, field: 'totalQuantity', source: 'body', required: false, min: 0 }),
       status: asEnum({ value: body.status, field: 'status', source: 'body', required: false, values: ['ACTIVE', 'INACTIVE', 'MAINTENANCE', 'RETIRED'] })
     };
   },

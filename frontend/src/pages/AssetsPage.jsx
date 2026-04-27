@@ -40,8 +40,7 @@ const initialForm = {
   status: 'ACTIVE',
   description: '',
   categoryId: '',
-  totalQuantity: 1,
-  minimumStock: 0
+  totalQuantity: 1
 };
 
 const PAGE_SIZE = 20;
@@ -134,7 +133,6 @@ export default function AssetsPage() {
       status: form.status,
       description: form.description.trim() || undefined,
       categoryId: Number(form.categoryId),
-      minimumStock: Number(form.minimumStock)
     };
 
     try {
@@ -272,14 +270,6 @@ export default function AssetsPage() {
             placeholder="Cantidad total"
             value={form.totalQuantity}
             onChange={(event) => setForm((current) => ({ ...current, totalQuantity: event.target.value }))}
-            required
-          />
-          <input
-            type="number"
-            min={0}
-            placeholder="Stock mínimo"
-            value={form.minimumStock}
-            onChange={(event) => setForm((current) => ({ ...current, minimumStock: event.target.value }))}
             required
           />
           <select value={form.status} onChange={(event) => setForm((current) => ({ ...current, status: event.target.value }))}>
