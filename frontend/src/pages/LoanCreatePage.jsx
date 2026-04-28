@@ -11,6 +11,7 @@ const createEmptyItem = () => ({ assetId: '', quantity: 1, notes: '' });
 export default function LoanCreatePage() {
   const [employees, setEmployees] = useState([]);
   const [assets, setAssets] = useState([]);
+  const [assetSearch, setAssetSearch] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [form, setForm] = useState({
     employeeId: '',
@@ -49,6 +50,34 @@ export default function LoanCreatePage() {
 
   
   const findAsset = (assetId) => assets.find((asset) => asset.id === Number(assetId));
+
+  const filteredAssets = useMemo(() => {
+    const query = assetSearch.trim().toLowerCase();
+    if (!query) return assets;
+
+    return assets.filter((asset) => {
+      const searchableFields = [
+        asset.name,
+        asset.assetCode,
+        asset.brand,
+        asset.serialNumber,
+        asset.size
+      ]
+        .filter(Boolean)
+        .map((value) => String(value).toLowerCase());
+
+      return searchableFields.some((field) => field.includes(query));
+    });
+  }, [assets, assetSearch]);
+
+  const assetOptionLabel = (asset) => {
+    const loanedQuantity = Math.max((asset.totalQuantity || 0) - (asset.availableQuantity || 0), 0);
+    const sizeLabel = asset.size ? ` | Tamaño: ${asset.size}` : '';
+    const brandLabel = asset.brand ? ` | Marca: ${asset.brand}` : '';
+    const serialLabel = asset.serialNumber ? ` | Serial: ${asset.serialNumber}` : '';
+    return `${asset.assetCode} - ${asset.name}${sizeLabel}${brandLabel}${serialLabel} (Disp: ${asset.availableQuantity} | Prest: ${loanedQuantity} | Total: ${asset.totalQuantity})`;
+  };
+
   const selectedAssetIds = useMemo(
     () => new Set(form.items.map((item) => Number(item.assetId)).filter(Boolean)),
     [form.items]
@@ -186,22 +215,34 @@ export default function LoanCreatePage() {
             </button>
           </div>
 
+          <div className="space-y-1">
+            <p className="section-subtitle">Buscar activo</p>
+            <input
+              value={assetSearch}
+              onChange={(e) => setAssetSearch(e.target.value)}
+              placeholder="Buscar por nombre, código, marca, serial o tamaño"
+            />
+          </div>
+
           <div className="space-y-2">
             {form.items.map((item, idx) => {
               const selectedAsset = findAsset(item.assetId);
               const maxAvailable = Math.max(availableForItem(item), 1);
+              const assetsForRow = selectedAsset && !filteredAssets.some((asset) => asset.id === selectedAsset.id)
+                ? [selectedAsset, ...filteredAssets]
+                : filteredAssets;
 
               return (
                 <div key={idx} className="grid gap-2 rounded-xl border border-[#e4d8f2] bg-white p-3 md:grid-cols-[2fr_120px_1fr_auto]">
                   <select value={item.assetId} onChange={(e) => setItem(idx, { assetId: e.target.value, quantity: 1 })}>
                     <option value="">Activo</option>
-                    {assets.map((asset) => {
+                    {assetsForRow.map((asset) => {
                       const isTakenByAnotherRow = selectedAssetIds.has(asset.id) && Number(item.assetId) !== asset.id;
-                      const loanedQuantity = Math.max((asset.totalQuantity || 0) - (asset.availableQuantity || 0), 0);
+                      
 
                       return (
                         <option key={asset.id} value={asset.id} disabled={isTakenByAnotherRow}>
-                          {asset.assetCode} - {asset.name} (Disp: {asset.availableQuantity} | Prest: {loanedQuantity} | Total: {asset.totalQuantity})
+                          {assetOptionLabel(asset)}
                         </option>
                       );
                     })}
