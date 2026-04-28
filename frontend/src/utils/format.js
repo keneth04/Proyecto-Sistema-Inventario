@@ -43,5 +43,5 @@ export const formatDateTime = (value) => {
   }).format(date);
 };
 
-export const fullName = (person = {}) =>
-  [person.firstName, person.lastName].filter(Boolean).join(' ') || '—';
+export const fullName = (person) =>
+  [person?.firstName, person?.lastName].filter(Boolean).join(' ') || '—';
