@@ -12,6 +12,7 @@ const assetRepository = {
     tx.asset.updateMany({
       where: {
         id,
+        status: 'ACTIVE',
         availableQuantity: { gte: quantity }
       },
       data: {

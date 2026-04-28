@@ -69,9 +69,7 @@ const loanService = {
       for (const [assetId, requestedQuantity] of requestedByAsset.entries()) {
         const updateResult = await assetRepository.decrementAvailableTx(tx, assetId, requestedQuantity);
         if (updateResult.count === 0) {
-          const conflictedAsset = await assetRepository.findByIdForUpdate(tx, assetId);
-          const assetName = conflictedAsset?.name || 'el activo seleccionado';
-          throw new createError.BadRequest(`No hay unidades disponibles suficientes para ${assetName}`);
+          throw new createError.BadRequest('No hay unidades disponibles suficientes para este activo.');
         }
         const asset = await assetRepository.findByIdForUpdate(tx, assetId);
         const nextAvailable = asset.availableQuantity;
