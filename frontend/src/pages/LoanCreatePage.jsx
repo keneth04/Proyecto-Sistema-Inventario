@@ -27,7 +27,7 @@ export default function LoanCreatePage() {
     const loadInitialData = async () => {
       try {
         const [employeesResp, assetsResp] = await Promise.all([
-          EmployeeApi.list({ page: 1, pageSize: 100 }),
+          EmployeeApi.list({ page: 1, pageSize: 100, status: 'ACTIVE' }),
           AssetApi.list({ page: 1, pageSize: 100 })
         ]);
 
@@ -49,7 +49,7 @@ export default function LoanCreatePage() {
 
   
   const findAsset = (assetId) => assets.find((asset) => asset.id === Number(assetId));
-   const selectedAssetIds = useMemo(
+  const selectedAssetIds = useMemo(
     () => new Set(form.items.map((item) => Number(item.assetId)).filter(Boolean)),
     [form.items]
   );

@@ -39,6 +39,10 @@ const loanService = {
     const employee = await employeeRepository.findById(payload.employeeId);
     if (!employee) throw new createError.BadRequest('Empleado inválido');
     const requestedByAsset = new Map();
+    if (employee.status !== 'ACTIVE') {
+      throw new createError.BadRequest('No se puede registrar el préstamo porque el empleado está inactivo.');
+    }
+    
 
     for (const item of payload.items) {
       requestedByAsset.set(item.assetId, (requestedByAsset.get(item.assetId) || 0) + item.quantity);
