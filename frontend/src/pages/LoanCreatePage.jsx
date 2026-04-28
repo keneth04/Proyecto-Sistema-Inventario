@@ -32,7 +32,11 @@ export default function LoanCreatePage() {
         ]);
 
         setEmployees(employeesResp.data.body.items);
-        setAssets(assetsResp.data.body.items.filter((item) => item.availableQuantity > 0));
+        setAssets(
+          assetsResp.data.body.items.filter(
+            (item) => item.availableQuantity > 0 && item.status === 'ACTIVE'
+          )
+        );
       } catch (error) {
         push(getErrorMessage(error), 'error');
       } finally {

@@ -48,6 +48,9 @@ const loanService = {
       for (const [assetId, requestedQuantity] of requestedByAsset.entries()) {
         const asset = await assetRepository.findByIdForUpdate(tx, assetId);
         if (!asset) throw new createError.BadRequest('El activo seleccionado no está disponible');
+        if (asset.status !== 'ACTIVE') {
+          throw new createError.BadRequest(`El activo ${asset.name} no está disponible para préstamo.`);
+        }
         if (asset.availableQuantity < requestedQuantity) {
           throw new createError.BadRequest(`No hay unidades disponibles suficientes para ${asset.name}`);
         }

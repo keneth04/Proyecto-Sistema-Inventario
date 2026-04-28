@@ -20,7 +20,9 @@ const inventoryService = {
         totalStock: summary.totalAssetsQuantity,
         available: summary.availableAssetsQuantity,
         loaned: summary.loanedAssetsQuantity,
-        maintenance: byStatus.maintenanceAssets
+        maintenance: byStatus.maintenanceQuantity,
+        inactive: byStatus.inactiveQuantity,
+        retired: byStatus.retiredQuantity
       },
       latestMovements
     };

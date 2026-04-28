@@ -57,6 +57,8 @@ export default function DashboardPage() {
         <StatCard label="Disponibles" value={kpis.available} />
         <StatCard label="Prestados" value={kpis.loaned} />
         <StatCard label="En mantenimiento" value={kpis.maintenance} />
+        <StatCard label="Inactivos" value={kpis.inactive} />
+        <StatCard label="Retirados" value={kpis.retired} />
         <StatCard label="Últimas operaciones" value={latestMovements.length} />
       </div>
       <h3 className="mb-2 text-lg font-bold">Últimos movimientos</h3>
