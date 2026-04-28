@@ -1,7 +1,17 @@
 const createError = require('http-errors');
+const { prisma } = require('../prisma/client');
 const { assetRepository } = require('../repositories/assetRepository');
 const { categoryRepository } = require('../repositories/categoryRepository');
 const { auditRepository } = require('../repositories/auditRepository');
+const { movementRepository } = require('../repositories/movementRepository');
+
+const RETIREMENT_REASON_LABELS = {
+  DAMAGED: 'Dañado',
+  LOST: 'Perdido',
+  DECOMMISSIONED: 'Dado de baja',
+  NOT_FOUND: 'Ya no existe',
+  OTHER: 'Otro'
+};
 
 const toPositiveInt = (value, fallback) => {
   const parsed = Number.parseInt(String(value ?? ''), 10);
@@ -137,6 +147,54 @@ const assetService = {
       });
     }
     return updated;
+  },
+  retireUnits: async (id, payload, actorUserId) => {
+    prisma.$transaction(async (tx) => {
+      const asset = await assetRepository.findByIdForUpdate(tx, id);
+      if (!asset) throw new createError.NotFound('Activo no encontrado');
+
+      if (payload.quantity > asset.availableQuantity) {
+        throw new createError.BadRequest('No puedes retirar más unidades de las disponibles.');
+      }
+
+      const nextTotalQuantity = asset.totalQuantity - payload.quantity;
+      const nextAvailableQuantity = asset.availableQuantity - payload.quantity;
+      const reasonLabel = RETIREMENT_REASON_LABELS[payload.reason] || RETIREMENT_REASON_LABELS.OTHER;
+
+      const updated = await assetRepository.updateTx(tx, id, {
+        totalQuantity: nextTotalQuantity,
+        availableQuantity: nextAvailableQuantity
+      });
+
+      await movementRepository.createTx(tx, {
+        assetId: id,
+        performedByUserId: actorUserId,
+        movementType: 'WRITE_OFF',
+        quantityDelta: -payload.quantity,
+        resultingStock: nextAvailableQuantity,
+        reason: `${reasonLabel}${payload.observations ? ` · ${payload.observations}` : ''}`
+      });
+
+      await auditRepository.createTx(tx, {
+        performedByUserId: actorUserId,
+        entityType: 'ASSET',
+        entityId: id,
+        assetId: id,
+        action: 'STOCK_ADJUSTED',
+        summary: `Retiro parcial de ${payload.quantity} unidad(es) del activo ${asset.name}. Motivo: ${reasonLabel}.`,
+        metadata: {
+          previousTotalQuantity: asset.totalQuantity,
+          newTotalQuantity: nextTotalQuantity,
+          previousAvailableQuantity: asset.availableQuantity,
+          newAvailableQuantity: nextAvailableQuantity,
+          retiredQuantity: payload.quantity,
+          reason: payload.reason,
+          observations: payload.observations || null
+        }
+      });
+
+      return assetRepository.findById(id);
+    }) 
   }
 };
 

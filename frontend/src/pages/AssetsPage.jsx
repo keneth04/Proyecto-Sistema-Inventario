@@ -44,6 +44,13 @@ const initialForm = {
 };
 
 const PAGE_SIZE = 20;
+const RETIREMENT_REASON_OPTIONS = [
+  { value: 'DAMAGED', label: 'Dañado' },
+  { value: 'LOST', label: 'Perdido' },
+  { value: 'DECOMMISSIONED', label: 'Dado de baja' },
+  { value: 'NOT_FOUND', label: 'Ya no existe' },
+  { value: 'OTHER', label: 'Otro' }
+];
 
 const toOperationalStatus = (asset) => {
   if (asset.status === 'MAINTENANCE') return 'MAINTENANCE';
@@ -65,6 +72,9 @@ export default function AssetsPage() {
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [open, setOpen] = useState(false);
+  const [retireModalOpen, setRetireModalOpen] = useState(false);
+  const [assetToRetire, setAssetToRetire] = useState(null);
+  const [retireForm, setRetireForm] = useState({ quantity: 1, reason: 'DAMAGED', observations: '' });
   const [form, setForm] = useState(initialForm);
   const { user } = useAuth();
   const { push } = useToast();
@@ -151,6 +161,33 @@ export default function AssetsPage() {
       setIsSaving(false);
     }
   };
+  
+  const openRetireModal = (asset) => {
+    setAssetToRetire(asset);
+    setRetireForm({ quantity: 1, reason: 'DAMAGED', observations: '' });
+    setRetireModalOpen(true);
+  };
+
+  const submitRetireUnits = async (event) => {
+    event.preventDefault();
+    if (!assetToRetire) return;
+    setIsSaving(true);
+    try {
+      await AssetApi.retireUnits(assetToRetire.id, {
+        quantity: Number(retireForm.quantity),
+        reason: retireForm.reason,
+        observations: retireForm.observations.trim() || undefined
+      });
+      push('Retiro parcial registrado correctamente', 'success');
+      setRetireModalOpen(false);
+      setAssetToRetire(null);
+      await load();
+    } catch (error) {
+      push(getErrorMessage(error), 'error');
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
@@ -225,6 +262,11 @@ export default function AssetsPage() {
             render: (row) => (
               <div className="flex gap-2">
                 {canManage ? <Link className="btn-secondary py-1.5" to={`/assets/${row.id}/edit`}>Editar</Link> : null}
+                {canManage && row.availableQuantity > 0 ? (
+                  <button className="btn-secondary py-1.5" onClick={() => openRetireModal(row)}>
+                    Retirar unidades
+                  </button>
+                ) : null}
               </div>
             )
           }
@@ -285,6 +327,37 @@ export default function AssetsPage() {
             rows={4}
           />
           <button className="btn-primary" disabled={isSaving}>{isSaving ? 'Guardando...' : 'Guardar activo'}</button>
+        </form>
+      </Modal>
+       <Modal
+        open={retireModalOpen}
+        onClose={() => setRetireModalOpen(false)}
+        title={`Retirar unidades${assetToRetire ? ` · ${assetToRetire.name}` : ''}`}
+      >
+        <form className="grid gap-3" onSubmit={submitRetireUnits}>
+          <div className="info-chip">
+            Disponibles actuales: <strong>{assetToRetire?.availableQuantity ?? 0}</strong>
+          </div>
+          <input
+            type="number"
+            min={1}
+            max={assetToRetire?.availableQuantity || 1}
+            value={retireForm.quantity}
+            onChange={(event) => setRetireForm((current) => ({ ...current, quantity: event.target.value }))}
+            required
+          />
+          <select value={retireForm.reason} onChange={(event) => setRetireForm((current) => ({ ...current, reason: event.target.value }))}>
+            {RETIREMENT_REASON_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>{option.label}</option>
+            ))}
+          </select>
+          <textarea
+            placeholder="Observación (opcional)"
+            value={retireForm.observations}
+            onChange={(event) => setRetireForm((current) => ({ ...current, observations: event.target.value }))}
+            rows={3}
+          />
+          <button className="btn-primary" disabled={isSaving}>{isSaving ? 'Guardando...' : 'Confirmar retiro parcial'}</button>
         </form>
       </Modal>
     </div>

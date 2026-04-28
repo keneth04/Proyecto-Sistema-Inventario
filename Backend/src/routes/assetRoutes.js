@@ -11,5 +11,6 @@ router.get('/:id', RoleMiddleware(['ADMIN', 'INVENTORY_MANAGER', 'VIEWER']), val
 router.post('/', RoleMiddleware(['ADMIN', 'INVENTORY_MANAGER']), validateRequest({ body: assetSchemas.create }), assetController.create);
 router.put('/:id', RoleMiddleware(['ADMIN', 'INVENTORY_MANAGER']), validateRequest({ params: assetSchemas.idParam, body: assetSchemas.update }), assetController.update);
 router.patch('/:id/status', RoleMiddleware(['ADMIN', 'INVENTORY_MANAGER']), validateRequest({ params: assetSchemas.idParam, body: (body) => ({ status: body.status }) }), assetController.changeStatus);
+router.patch('/:id/retire-units', RoleMiddleware(['ADMIN', 'INVENTORY_MANAGER']), validateRequest({ params: assetSchemas.idParam, body: assetSchemas.retireUnits }), assetController.retireUnits);
 
 module.exports = { assetRoutes: router };

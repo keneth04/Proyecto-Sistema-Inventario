@@ -23,7 +23,8 @@ export const CategoryApi = buildCrudApi('categories');
 
 export const AssetApi = {
   ...buildCrudApi('assets'),
-  changeStatus: (id, status) => api.patch(`/assets/${id}/status`, { status })
+  changeStatus: (id, status) => api.patch(`/assets/${id}/status`, { status }),
+  retireUnits: (id, payload) => api.patch(`/assets/${id}/retire-units`, payload)
 };
 
 export const LoanApi = {

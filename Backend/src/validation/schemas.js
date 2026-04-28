@@ -247,7 +247,7 @@ const userSchemas = {
   idParam: commonIdParam
 };
 
-    const assetSchemas = {
+  const assetSchemas = {
   create: (body) => {
     assertObject(body, 'body');
     allowOnly(body, ['categoryId', 'assetCode', 'name', 'brand', 'model', 'serialNumber', 'description', 'totalQuantity', 'status'], 'body');
@@ -276,6 +276,20 @@ const userSchemas = {
       description: asString({ value: body.description, field: 'description', source: 'body', required: false, max: 2000 }),
       totalQuantity: asInt({ value: body.totalQuantity, field: 'totalQuantity', source: 'body', required: false, min: 0 }),
       status: asEnum({ value: body.status, field: 'status', source: 'body', required: false, values: ['ACTIVE', 'INACTIVE', 'MAINTENANCE', 'RETIRED'] })
+    };
+  },
+  retireUnits: (body) => {
+    assertObject(body, 'body');
+    allowOnly(body, ['quantity', 'reason', 'observations'], 'body');
+    return {
+      quantity: asInt({ value: body.quantity, field: 'quantity', source: 'body', min: 1 }),
+      reason: asEnum({
+        value: body.reason,
+        field: 'reason',
+        source: 'body',
+        values: ['DAMAGED', 'LOST', 'DECOMMISSIONED', 'NOT_FOUND', 'OTHER']
+      }),
+      observations: asString({ value: body.observations, field: 'observations', source: 'body', required: false, max: 255 })
     };
   },
   list: parseListQuery,

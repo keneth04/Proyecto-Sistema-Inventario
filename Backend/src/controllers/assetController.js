@@ -13,6 +13,14 @@ const assetController = {
     } catch (error) {
       return next(error);
     }
+  },
+  retireUnits: async (req, res, next) => {
+    try {
+      const data = await assetService.retireUnits(Number(req.params.id), req.body, req.user.id);
+      return Response.success(res, 200, 'Unidades retiradas correctamente', data);
+    } catch (error) {
+      return next(error);
+    }
   }
 };
 
