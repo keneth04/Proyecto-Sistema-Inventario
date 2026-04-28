@@ -50,7 +50,30 @@ export default function ReturnsPage() {
     return 'bg-slate-100 text-slate-700';
   };
 
-    const filteredRows = useMemo(() => {
+     const returnConditionLabel = (condition) => {
+    if (condition === 'GOOD') return 'Bueno';
+    if (condition === 'FAIR') return 'Regular';
+    if (condition === 'DAMAGED') return 'Dañado';
+    if (condition === 'NON_FUNCTIONAL') return 'No funcional';
+    return 'Sin especificar';
+  };
+
+  const returnConditionSummary = (record) => {
+    const summaryByCondition = (record.items || []).reduce((acc, item) => {
+      const key = returnConditionLabel(item.itemCondition);
+      acc[key] = (acc[key] || 0) + (item.quantity || 0);
+      return acc;
+    }, {});
+
+    const summaryEntries = Object.entries(summaryByCondition);
+    if (summaryEntries.length === 0) return 'Sin especificar';
+
+    return summaryEntries
+      .map(([label, quantity]) => `${label} (${quantity})`)
+      .join(', ');
+  };
+
+  const filteredRows = useMemo(() => {
     const normalizedQuery = filters.query.trim().toLowerCase();
 
     return rows.filter((record) => {
@@ -131,6 +154,11 @@ export default function ReturnsPage() {
                   {statusLabel(record.loan?.status)}
                 </span>
               )
+            },
+            {
+              key: 'returnCondition',
+              label: 'Estado en que se devolvió',
+              render: (record) => returnConditionSummary(record)
             },
             { key: 'observations', label: 'Observaciones', render: (record) => record.observations || 'Sin observaciones' }
           ]}
